@@ -67,9 +67,7 @@ std::vector<int16_t> generateSineWave(int sampleRate, int duration, int frequenc
 
 std::vector<int32_t> generateSawWave(int sampleRate, int duration)
 {
-    // sampleRate is simply sounds per second
-    // duration is total duration of sound
-    // frequency determines pitch, so A4=440
+    // TODO - Doubling length of expected saw wave sample due to type mismatch
     int nNumSamples = sampleRate*duration*1; //1 for channels
     std::vector<int32_t> audioData(nNumSamples);
     int32_t nValue = 0;
