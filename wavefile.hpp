@@ -23,6 +23,6 @@ struct SMinimalWaveFileHeader {
 bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize, 
                    int16_t nNumChannels, int32_t nSampleRate, int32_t nBitsPerSample);
 
-std::vector<int16_t> generateSineWave(int sampleRate, int duration, int frequency);
+std::vector<int16_t> generateSineWave(int sampleRate, int duration, int frequency, bool split);
 
 #endif // WAVEFILE_HPP

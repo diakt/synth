@@ -4,12 +4,12 @@
 int main() {
     std::cout << "Generating WAV file..." << std::endl;
     
-    const char* fn = "output.wav";
+    const char* fn = "output/output.wav";
     int sampleRate = 44100;
     int duration = 100;  // seconds
-    int frequency = 440;  // Hz
-
-    std::vector<int16_t> audioData = generateSineWave(sampleRate, duration, frequency);
+    int frequency = 440;  //Determines pitch - file:///Users/kassandra/Downloads/Piano_Keyboard_Reference_Guide.pdf
+	bool split = true;
+    std::vector<int16_t> audioData = generateSineWave(sampleRate, duration, frequency, split);
 
     void* pData = audioData.data();
     int32_t dataSize = audioData.size() * sizeof(int16_t);

@@ -5,4 +5,4 @@ run:
 	./main
 
 clean:
-	rm -f wavegenerator
+	rm -f main
