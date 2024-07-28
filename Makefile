@@ -1,8 +1,8 @@
-build: wavefile.cpp main.cpp
-	g++ -std=c++11 wavefile.cpp main.cpp -o main
+build: ./src/wavefile.cpp ./src/main.cpp
+	g++ -std=c++11 ./src/wavefile.cpp ./src/main.cpp -o ./build/main
 
 run:
-	./main
+	./build/main
 
 clean:
-	rm -f main
+	rm -f ./build/main
