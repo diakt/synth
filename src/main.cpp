@@ -1,33 +1,27 @@
 #include "wavefile.hpp"
 #include <iostream>
+#include <chrono>
 
 int main() {
-    std::cout << "Generating WAV file..." << std::endl;
+
+    char* fn = getFileName();
+
+    std::cout << "Generating WAV file at location" << fn << std::endl;
     
-    const char* fn = "output/output.wav";
-    int sampleRate = 44100;
-    int duration = 100;  // seconds
-    int frequency = 440;  //Determines pitch - check resources
-	int split = 3;
-    std::vector<int16_t> audioData = generateSineWave(sampleRate, duration, frequency, split);
-    std::vector<int32_t> sawData = generateSawWave(sampleRate, duration);
+    int nSampleRate = 44100;
+    int nNumSeconds = 10;  
+    int nNumChannels = 1; 
 
-    // void* pData = audioData.data();
-    // int32_t dataSize = audioData.size() * sizeof(int16_t);
-    // int16_t numChannels = 1;  // Mono
-    // int32_t bitsPerSample = 16;
+    int32_t *sawData = generateSawWave(nSampleRate, nNumSeconds, nNumChannels);
 
-    // bool success = WriteWaveFile(fn, pData, dataSize, numChannels, sampleRate, bitsPerSample);
-
-    void* pData = sawData.data();
 
     bool success = WriteWaveFile(
-        "output/saw.wav", 
-        pData, 
-        static_cast<int32_t>(sawData.size() * sizeof(int32_t)), 
-        static_cast<int16_t>(1), 
-        static_cast<int32_t>(44100),
-        static_cast<int32_t>(16)
+        fn,
+        sawData, 
+        static_cast<int32_t>(nSampleRate*nNumSeconds*nNumChannels * sizeof(int32_t)), 
+        static_cast<int16_t>(1),  //cardchannels
+        static_cast<int32_t>(44100), //freq
+        static_cast<int32_t>(32)    //
         );
 
     if (success) {

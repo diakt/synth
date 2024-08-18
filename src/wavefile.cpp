@@ -1,13 +1,50 @@
 #include "wavefile.hpp"
-#include <cstring>
-#include <cstdio>
-#include <cmath>
 
-bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize, int16_t nNumChannels, int32_t nSampleRate, int32_t nBitsPerSample)
-{
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+
+#include <typeinfo>
+
+
+// UTILS
+
+
+
+char* getFileName(){
+    auto now = std::chrono::system_clock::now();
+    long now_c = std::chrono::system_clock::to_time_t(now);
+
+    std::cout << "Current Unix: " << now_c << std::endl;
+
+    std::string str = std::to_string(now_c);
+    char* char_arr = new char[str.length()+1];
+    std::strcpy(char_arr, str.c_str());
+
+    const char* base = "output/output_";
+    const char* end = ".wav";
+
+
+    char* res = new char[strlen(base)+strlen(char_arr)+strlen(end)];
+    std::strcpy(res, base);
+    std::strcat(res, char_arr);
+    std::strcat(res, end);
+
+
+    delete[] char_arr;
+
+    return res;
+
+}
+
+
+//WRITE ARRAY TO FILE
+bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize,
+                   int16_t nNumChannels, int32_t nSampleRate,
+                   int32_t nBitsPerSample) {
     FILE *File = fopen(szFileName, "w+b");
-    if(!File)
-    {
+    if (!File) {
         return false;
     }
 
@@ -36,48 +73,52 @@ bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize, int16
     return true;
 }
 
-std::vector<int16_t> generateSineWave(int sampleRate, int duration, int frequency, int split)
-{
+
+
+
+//GENERATE WAVEFORMS
+std::vector<int16_t> generateSineWave(int sampleRate, int duration,
+                                      int frequency, int split) {
     // sampleRate is simply sounds per second
     // duration is total duration of sound
     // frequency determines pitch, so A4=440
 
     std::vector<int16_t> audioData(sampleRate * duration);
     int base = frequency;
-    int ssr = split*sampleRate;
-    if (split!=1){
+    int ssr = split * sampleRate;
+    if (split != 1) {
         for (int i = 0; i < sampleRate * duration; ++i) {
-            if (i%sampleRate==0){
-                if (i%(ssr)==0){ 
-                    frequency=base;
+            if (i % sampleRate == 0) {
+                if (i % (ssr) == 0) {
+                    frequency = base;
                 } else {
-                    frequency*=2;
+                    frequency *= 2;
                 }
             }
-            audioData[i] = static_cast<int16_t>(32767 * sin(2 * M_PI * frequency * i/sampleRate));
+            audioData[i] = static_cast<int16_t>(
+                32767 * sin(2 * M_PI * frequency * i / sampleRate));
         }
     } else {
         for (int i = 0; i < sampleRate * duration; ++i) {
-            audioData[i] = static_cast<int16_t>(32767 * sin(2 * M_PI * frequency * i / sampleRate));
+            audioData[i] = static_cast<int16_t>(
+                32767 * sin(2 * M_PI * frequency * i / sampleRate));
         }
     }
-    
+
     return audioData;
 }
 
-std::vector<int32_t> generateSawWave(int sampleRate, int duration)
-{
+
+int32_t* generateSawWave(int nSampleRate, int nNumSeconds, int nNumChannels) {
     // TODO - Doubling length of expected saw wave sample due to type mismatch
-    int nNumSamples = sampleRate*duration*1; //1 for channels
-    std::vector<int32_t> audioData(nNumSamples);
+    int nNumSamples = nSampleRate * nNumChannels * nNumSeconds;
+    int32_t *audioData = new int32_t[nNumSamples];
+
     int32_t nValue = 0;
-    for(int nIndex = 0; nIndex < nNumSamples; ++nIndex)
-    {
+    for (int nIndex = 0; nIndex < nNumSamples; ++nIndex) {
         nValue += 8000000;
         audioData[nIndex] = nValue;
     }
-    
-    
+
     return audioData;
 }
-

@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <vector>
 
+char* getFileName();
+
+
 struct SMinimalWaveFileHeader {
     unsigned char m_szChunkID[4];
     uint32_t m_nChunkSize;
@@ -20,11 +23,14 @@ struct SMinimalWaveFileHeader {
     uint32_t m_nSubChunk2Size;
 };
 
-bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize, 
-                   int16_t nNumChannels, int32_t nSampleRate, int32_t nBitsPerSample);
+bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize,
+                   int16_t nNumChannels, int32_t nSampleRate,
+                   int32_t nBitsPerSample);
 
-std::vector<int16_t> generateSineWave(int sampleRate, int duration, int frequency, int split);
+std::vector<int16_t> generateSineWave(int sampleRate, int duration,
+                                      int frequency, int split);
 
-std::vector<int32_t> generateSawWave(int sampleRate, int duration);
+int32_t* generateSawWave(int nSampleRate, int nNumSeconds, int nNumChannels);
 
-#endif // WAVEFILE_HPP
+
+#endif  // WAVEFILE_HPP
