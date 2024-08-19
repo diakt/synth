@@ -6,7 +6,7 @@
 #include <iostream>
 #include <typeinfo>
 
-// UTILS
+// FILE UTILS
 
 char* getFileName() {
     auto now = std::chrono::system_clock::now();
@@ -32,6 +32,7 @@ char* getFileName() {
 }
 
 // WRITE ARRAY TO FILE
+//template this
 bool WriteWaveFile(const char* szFileName, void* pData, int32_t nDataSize,
                    int16_t nNumChannels, int32_t nSampleRate,
                    int32_t nBitsPerSample) {
@@ -65,6 +66,15 @@ bool WriteWaveFile(const char* szFileName, void* pData, int32_t nDataSize,
     return true;
 }
 
+// SOUND UTILS
+
+float getFreq(int octave, int note){
+    //base is 4 on 0
+    return (float)(440*pow(2.0, ((double)((octave-4)*12+note))/12.0));
+}
+
+
+
 // GENERATE WAVEFORMS
 float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels) {
     // sampleRate is simply sounds per second
@@ -72,10 +82,17 @@ float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels) {
     // frequency determines pitch, so A4=440
     int nNumSamples = nSampleRate*nNumSeconds*nNumChannels;
     float* audioData = new float[nNumSamples];
-    float fFrequency = 440.0;
 
+    //problem child
+    float testFreq1 = getFreq(4, 0);
+    float testFreq2 = getFreq(4, 3);
+    int transfer = nNumSamples/2;
     for(int i=0; i < nNumSamples; ++i){
-        audioData[i] = sin((float)i * 2 * (float)M_PI * fFrequency / (float)nSampleRate);;
+        if (i < transfer){
+            audioData[i] = sin((float)i * 2 * (float)M_PI * testFreq1 / (float)nSampleRate);
+        } else {
+            audioData[i] = sin((float)i * 2 * (float)M_PI * testFreq2 / (float)nSampleRate);
+        }
     }
     return audioData;
 }
