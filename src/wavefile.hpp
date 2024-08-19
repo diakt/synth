@@ -32,5 +32,7 @@ std::vector<int16_t> generateSineWave(int sampleRate, int duration,
 
 int32_t* generateSawWave(int nSampleRate, int nNumSeconds, int nNumChannels);
 
+int32_t* generateStereoSawWave(int nSampleRate, int nNumSeconds, int nNumChannels);
+
 
 #endif  // WAVEFILE_HPP

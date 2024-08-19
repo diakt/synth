@@ -4,46 +4,38 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-
 #include <typeinfo>
-
 
 // UTILS
 
-
-
-char* getFileName(){
+char* getFileName() {
     auto now = std::chrono::system_clock::now();
     long now_c = std::chrono::system_clock::to_time_t(now);
 
     std::cout << "Current Unix: " << now_c << std::endl;
 
     std::string str = std::to_string(now_c);
-    char* char_arr = new char[str.length()+1];
+    char* char_arr = new char[str.length() + 1];
     std::strcpy(char_arr, str.c_str());
 
     const char* base = "output/output_";
     const char* end = ".wav";
 
-
-    char* res = new char[strlen(base)+strlen(char_arr)+strlen(end)];
+    char* res = new char[strlen(base) + strlen(char_arr) + strlen(end)];
     std::strcpy(res, base);
     std::strcat(res, char_arr);
     std::strcat(res, end);
 
-
     delete[] char_arr;
 
     return res;
-
 }
 
-
-//WRITE ARRAY TO FILE
-bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize,
+// WRITE ARRAY TO FILE
+bool WriteWaveFile(const char* szFileName, void* pData, int32_t nDataSize,
                    int16_t nNumChannels, int32_t nSampleRate,
                    int32_t nBitsPerSample) {
-    FILE *File = fopen(szFileName, "w+b");
+    FILE* File = fopen(szFileName, "w+b");
     if (!File) {
         return false;
     }
@@ -73,10 +65,7 @@ bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize,
     return true;
 }
 
-
-
-
-//GENERATE WAVEFORMS
+// GENERATE WAVEFORMS
 std::vector<int16_t> generateSineWave(int sampleRate, int duration,
                                       int frequency, int split) {
     // sampleRate is simply sounds per second
@@ -108,16 +97,33 @@ std::vector<int16_t> generateSineWave(int sampleRate, int duration,
     return audioData;
 }
 
-
 int32_t* generateSawWave(int nSampleRate, int nNumSeconds, int nNumChannels) {
     // TODO - Doubling length of expected saw wave sample due to type mismatch
     int nNumSamples = nSampleRate * nNumChannels * nNumSeconds;
-    int32_t *audioData = new int32_t[nNumSamples];
+    int32_t* audioData = new int32_t[nNumSamples];
 
     int32_t nValue = 0;
     for (int nIndex = 0; nIndex < nNumSamples; ++nIndex) {
         nValue += 8000000;
         audioData[nIndex] = nValue;
+    }
+
+    return audioData;
+}
+
+int32_t* generateStereoSawWave(int nSampleRate, int nNumSeconds,
+                               int nNumChannels) {
+    // TODO - Doubling length of expected saw wave sample due to type mismatch
+    int nNumSamples = nSampleRate * nNumChannels * nNumSeconds;
+    int32_t* audioData = new int32_t[nNumSamples];
+
+    int32_t nValue1 = 0;
+    int32_t nValue2 = 0;
+    for (int nIndex = 0; nIndex < nNumSamples; nIndex += 2) {
+        nValue1 += 8000000;
+        nValue2 += 12000000;
+        audioData[nIndex] = nValue1;      // left channel
+        audioData[nIndex + 1] = nValue2;  // right channel
     }
 
     return audioData;
