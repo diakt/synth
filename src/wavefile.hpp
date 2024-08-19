@@ -27,11 +27,11 @@ bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize,
                    int16_t nNumChannels, int32_t nSampleRate,
                    int32_t nBitsPerSample);
 
-float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels);
 
 int32_t* generateSawWave(int nSampleRate, int nNumSeconds, int nNumChannels);
 
 int32_t* generateStereoSawWave(int nSampleRate, int nNumSeconds, int nNumChannels);
 
+float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, float vol);
 
 #endif  // WAVEFILE_HPP

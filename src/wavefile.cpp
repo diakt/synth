@@ -32,7 +32,8 @@ char* getFileName() {
 }
 
 // WRITE ARRAY TO FILE
-//template this
+// template this
+// template <typename T>
 bool WriteWaveFile(const char* szFileName, void* pData, int32_t nDataSize,
                    int16_t nNumChannels, int32_t nSampleRate,
                    int32_t nBitsPerSample) {
@@ -40,6 +41,9 @@ bool WriteWaveFile(const char* szFileName, void* pData, int32_t nDataSize,
     if (!File) {
         return false;
     }
+    // nBitsPerSample = sizeof(T)*8;
+    // int nDataSize = nNumSamples
+
 
     SMinimalWaveFileHeader waveHeader;
 
@@ -68,34 +72,12 @@ bool WriteWaveFile(const char* szFileName, void* pData, int32_t nDataSize,
 
 // SOUND UTILS
 
-float getFreq(int octave, int note){
-    //base is 4 on 0
-    return (float)(440*pow(2.0, ((double)((octave-4)*12+note))/12.0));
+float getFreq(int octave, int note) {
+    // base is 4 on 0
+    return (float)(440 * pow(2.0, ((double)((octave - 4) * 12 + note)) / 12.0));
 }
-
-
 
 // GENERATE WAVEFORMS
-float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels) {
-    // sampleRate is simply sounds per second
-    // duration is total duration of sound
-    // frequency determines pitch, so A4=440
-    int nNumSamples = nSampleRate*nNumSeconds*nNumChannels;
-    float* audioData = new float[nNumSamples];
-
-    //problem child
-    float testFreq1 = getFreq(4, 0);
-    float testFreq2 = getFreq(4, 3);
-    int transfer = nNumSamples/2;
-    for(int i=0; i < nNumSamples; ++i){
-        if (i < transfer){
-            audioData[i] = sin((float)i * 2 * (float)M_PI * testFreq1 / (float)nSampleRate);
-        } else {
-            audioData[i] = sin((float)i * 2 * (float)M_PI * testFreq2 / (float)nSampleRate);
-        }
-    }
-    return audioData;
-}
 
 int32_t* generateSawWave(int nSampleRate, int nNumSeconds, int nNumChannels) {
     // TODO - Doubling length of expected saw wave sample due to type mismatch
@@ -128,3 +110,35 @@ int32_t* generateStereoSawWave(int nSampleRate, int nNumSeconds,
 
     return audioData;
 }
+
+float advanceOscillator_Sine(float& fPhase, float fFrequency,
+                             float fSampleRate) {
+    fPhase += 2 * (float)M_PI * fFrequency / (float)fSampleRate;
+
+    while (fPhase >= 2 * (float)M_PI) {
+        fPhase -= 2 * (float)M_PI;
+    }
+    while (fPhase < 0) {
+        fPhase += 2 * (float)M_PI;
+    }
+    return sin(fPhase);
+}
+
+float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, float vol) {
+    //vol is problem child to the extremes
+
+    int nNumSamples = nSampleRate * nNumSeconds * nNumChannels;
+    float* audioData = new float[nNumSamples];
+
+    
+    float testFreq1 = getFreq(3, 0);
+    float testFreq2 = getFreq(3, 3);
+    int transfer = nNumSamples / 2;
+
+    float fPhase = 0;
+    for (int i = 0; i < nNumSamples; ++i) {
+        if (i < transfer) audioData[i] = advanceOscillator_Sine(fPhase, testFreq1, nSampleRate);
+        else audioData[i] = vol * advanceOscillator_Sine(fPhase, testFreq2, nSampleRate);
+    }
+    return audioData;
+} 
