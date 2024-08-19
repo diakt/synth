@@ -66,34 +66,17 @@ bool WriteWaveFile(const char* szFileName, void* pData, int32_t nDataSize,
 }
 
 // GENERATE WAVEFORMS
-std::vector<int16_t> generateSineWave(int sampleRate, int duration,
-                                      int frequency, int split) {
+float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels) {
     // sampleRate is simply sounds per second
     // duration is total duration of sound
     // frequency determines pitch, so A4=440
+    int nNumSamples = nSampleRate*nNumSeconds*nNumChannels;
+    float* audioData = new float[nNumSamples];
+    float fFrequency = 440.0;
 
-    std::vector<int16_t> audioData(sampleRate * duration);
-    int base = frequency;
-    int ssr = split * sampleRate;
-    if (split != 1) {
-        for (int i = 0; i < sampleRate * duration; ++i) {
-            if (i % sampleRate == 0) {
-                if (i % (ssr) == 0) {
-                    frequency = base;
-                } else {
-                    frequency *= 2;
-                }
-            }
-            audioData[i] = static_cast<int16_t>(
-                32767 * sin(2 * M_PI * frequency * i / sampleRate));
-        }
-    } else {
-        for (int i = 0; i < sampleRate * duration; ++i) {
-            audioData[i] = static_cast<int16_t>(
-                32767 * sin(2 * M_PI * frequency * i / sampleRate));
-        }
+    for(int i=0; i < nNumSamples; ++i){
+        audioData[i] = sin((float)i * 2 * (float)M_PI * fFrequency / (float)nSampleRate);;
     }
-
     return audioData;
 }
 

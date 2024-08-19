@@ -27,8 +27,7 @@ bool WriteWaveFile(const char *szFileName, void *pData, int32_t nDataSize,
                    int16_t nNumChannels, int32_t nSampleRate,
                    int32_t nBitsPerSample);
 
-std::vector<int16_t> generateSineWave(int sampleRate, int duration,
-                                      int frequency, int split);
+float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels);
 
 int32_t* generateSawWave(int nSampleRate, int nNumSeconds, int nNumChannels);
 

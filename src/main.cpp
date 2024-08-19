@@ -10,19 +10,20 @@ int main() {
     
     int nSampleRate = 44100;
     int nNumSeconds = 3;  
-    int nNumChannels = 2; 
+    int nNumChannels = 1; 
 
-    // int32_t *sawData = generateSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels must be 2
-    int32_t *sawData = generateStereoSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels must be 2
+    // int32_t *audioData = generateSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels should be 1
+    // int32_t *audioData = generateStereoSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels must be 2
+    float *audioData = generateSineWave(nSampleRate, nNumSeconds, nNumChannels); 
 
 
     bool success = WriteWaveFile(
         fn,
-        sawData, 
-        static_cast<int32_t>(nSampleRate*nNumSeconds*nNumChannels * sizeof(int32_t)), 
+        audioData, 
+        static_cast<int32_t>(nSampleRate*nNumSeconds*nNumChannels * sizeof(float)), 
         static_cast<int16_t>(nNumChannels), 
         static_cast<int32_t>(nSampleRate), 
-        static_cast<int32_t>(sizeof(sawData[0])*8)    //
+        static_cast<int32_t>(sizeof(audioData[0])*8)    //
         );
 
     if (success) {
