@@ -11,7 +11,7 @@ int main() {
     int nSampleRate = 44100;
     int nNumSeconds = 3;  
     int nNumChannels = 1; 
-    float vol = 0.01f;
+    float vol = 1.0f;
 
     // int32_t *audioData = generateSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels should be 1
     // int32_t *audioData = generateStereoSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels must be 2
