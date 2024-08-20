@@ -5,6 +5,9 @@
 #include <cstring>
 #include <iostream>
 #include <typeinfo>
+#include <cstdint>
+#include <type_traits>
+#include <algorithm>
 
 // FILE UTILS
 
@@ -31,50 +34,56 @@ char* getFileName() {
     return res;
 }
 
-// WRITE ARRAY TO FILE
-// template this
-// template <typename T>
-bool WriteWaveFile(const char* szFileName, void* pData, int32_t nDataSize,
-                   int16_t nNumChannels, int32_t nSampleRate,
-                   int32_t nBitsPerSample) {
-    FILE* File = fopen(szFileName, "w+b");
-    if (!File) {
-        return false;
-    }
-    // nBitsPerSample = sizeof(T)*8;
-    // int nDataSize = nNumSamples
+
+//CLAMP MACRO
+#define CLAMP(value, min, max) {if (value < min){value = min;} else if (value > max){value = max;}};
 
 
-    SMinimalWaveFileHeader waveHeader;
+//TYPE UTILS
 
-    memcpy(waveHeader.m_szChunkID, "RIFF", 4);
-    waveHeader.m_nChunkSize = nDataSize + 36;
-    memcpy(waveHeader.m_szFormat, "WAVE", 4);
-
-    memcpy(waveHeader.m_szSubChunk1ID, "fmt ", 4);
-    waveHeader.m_nSubChunk1Size = 16;
-    waveHeader.m_nAudioFormat = 1;
-    waveHeader.m_nNumChannels = nNumChannels;
-    waveHeader.m_nSampleRate = nSampleRate;
-    waveHeader.m_nByteRate = nSampleRate * nNumChannels * nBitsPerSample / 8;
-    waveHeader.m_nBlockAlign = nNumChannels * nBitsPerSample / 8;
-    waveHeader.m_nBitsPerSample = nBitsPerSample;
-
-    memcpy(waveHeader.m_szSubChunk2ID, "data", 4);
-    waveHeader.m_nSubChunk2Size = nDataSize;
-
-    fwrite(&waveHeader, sizeof(SMinimalWaveFileHeader), 1, File);
-    fwrite(pData, nDataSize, 1, File);
-
-    fclose(File);
-    return true;
+// Overload for uint8_t
+void convFromFloat(float fIn, uint8_t& tOut) {
+    fIn = (fIn + 1.0f) * 127.5f;
+    fIn = std::min(255.0f, std::max(0.0f, fIn));
+    tOut = static_cast<uint8_t>(fIn);
 }
+
+// Overload for int16_t
+void convFromFloat(float fIn, int16_t& tOut) {
+    fIn *= 32767.0f;
+    fIn = std::min(32767.0f, std::max(-32768.0f, fIn)); 
+    tOut = static_cast<int16_t>(fIn);
+}
+
+// Overload for int32_t
+void convFromFloat(float fIn, int32_t& tOut) {
+    double dIn = static_cast<double>(fIn) * 2147483647.0;
+    dIn = std::min(2147483647.0, std::max(-2147483648.0, dIn));
+    tOut = static_cast<int32_t>(dIn);
+}
+
+
+
 
 // SOUND UTILS
 
 float getFreq(int octave, int note) {
     // base is 4 on 0
     return (float)(440 * pow(2.0, ((double)((octave - 4) * 12 + note)) / 12.0));
+}
+
+// OSCILLATORS
+float advanceOscillator_Sine(float& fPhase, float fFrequency,
+                             float fSampleRate) {
+    fPhase += 2 * (float)M_PI * fFrequency / (float)fSampleRate;
+
+    while (fPhase >= 2 * (float)M_PI) {
+        fPhase -= 2 * (float)M_PI;
+    }
+    while (fPhase < 0) {
+        fPhase += 2 * (float)M_PI;
+    }
+    return sin(fPhase);
 }
 
 // GENERATE WAVEFORMS
@@ -109,19 +118,6 @@ int32_t* generateStereoSawWave(int nSampleRate, int nNumSeconds,
     }
 
     return audioData;
-}
-
-float advanceOscillator_Sine(float& fPhase, float fFrequency,
-                             float fSampleRate) {
-    fPhase += 2 * (float)M_PI * fFrequency / (float)fSampleRate;
-
-    while (fPhase >= 2 * (float)M_PI) {
-        fPhase -= 2 * (float)M_PI;
-    }
-    while (fPhase < 0) {
-        fPhase += 2 * (float)M_PI;
-    }
-    return sin(fPhase);
 }
 
 float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, float vol) {
