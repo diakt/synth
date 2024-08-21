@@ -69,7 +69,6 @@ void convFromFloat(float fIn, int32_t &tOut) {
 }
 
 // SOUND UTILS
-
 float getFreq(int octave, int note) {
     // base is 4 on 0
     return (float)(440 * pow(2.0, ((double)((octave - 4) * 12 + note)) / 12.0));
@@ -189,12 +188,57 @@ float *generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, floa
     float fPhase = 0;
     float lastVal = 0.0f;
     for (int i = 0; i < nNumSamples; ++i) {
-        if (i < transfer){
+        if (i<transfer){
             audioData[i] = vol * advanceOscillator_Sine(fPhase, testFreq1, nSampleRate);
         } else {
-            audioData[i] = vol * advanceOscillator_Noise(fPhase, testFreq2, nSampleRate, lastVal);
+            audioData[i] = vol * advanceOscillator_Sine(fPhase, testFreq2, nSampleRate);
         }
-        lastVal = audioData[i];
+        lastVal = audioData[i]; 
     }
+    return audioData;
+}
+
+float* generateMultiSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, int nNotes, float vol){
+    int nNumSamples = nSampleRate * nNumSeconds * nNumChannels;
+    float *audioData = new float[nNumSamples];
+
+    std::vector<float> frequencies = {
+        getFreq(3,0),
+        getFreq(3,3),
+        getFreq(3,7),
+        getFreq(3, 10)
+    };
+
+    float t;
+    float norm = 1.0f/nNotes;
+
+    for(int i=0; i < nNumSamples; ++i){
+        t = static_cast<float>(i)/nSampleRate;
+        float sample = 0;
+        for (float x: frequencies){
+            audioData[i]+=norm*std::sin(2*M_PI*x*t);
+        }
+
+
+    }
+    return audioData;
+}
+
+
+// float t = static_cast<float>(i) / nSampleRate;
+
+        // Combine two frequencies in a single sine wave
+        // float sample = std::sin(2 * M_PI * freq1 * t) + std::sin(2 * M_PI * freq2 * t);
+
+        // Normalize to prevent clipping
+        // sample *= 0.5f;
+
+
+
+
+
+float* generateFactory(){
+    float *audioData = new float[3];
+
     return audioData;
 }

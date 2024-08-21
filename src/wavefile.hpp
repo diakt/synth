@@ -81,4 +81,6 @@ int32_t* generateStereoSawWave(int nSampleRate, int nNumSeconds, int nNumChannel
 
 float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, float vol);
 
+float* generateMultiSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, int nNotes, float vol);
+
 #endif  // WAVEFILE_HPP

@@ -6,5 +6,6 @@ Based heavily off of demofox's work at https://blog.demofox.org/diy-synthesizer/
 
 
 TODO (Need demos):
-1) Make keyboard
+3) Define factory format for note passing
 2) Make song
+1) Make keyboard
