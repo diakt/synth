@@ -2,7 +2,10 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <array>
+#include <vector>
+#include <string>
 
+#define USTR(x) (const unsigned char*)(x)
 
 bool hasElementChildren(xmlNode* node){
     xmlNode* child = node->children;
@@ -70,74 +73,109 @@ void traverseXml(xmlNode * a_node, int depth = 0)
 
 }
 
+std::array<std::string, 3> attribParser(xmlNode* attribNode){
+    std::array<std::string, 3> res = {"", "", ""};
+    const unsigned char* attribPhrases[] =  {
+        USTR("divisions"), 
+        USTR("time"), 
+        USTR("beats"), 
+        USTR("beat-type")
+    };
 
+    xmlNode* sent = attribNode->children;
+    while(sent){
+        if(xmlStrcmp(sent->name, attribPhrases[0])==0){
+            xmlChar* dur = xmlNodeGetContent(sent);
+            res[2] = reinterpret_cast<char*>(dur);
+        } else if(xmlStrcmp(sent->name, attribPhrases[1])==0){
+            xmlNode* temp = sent->children;
+            while(temp){
+                if(xmlStrcmp(temp->name, attribPhrases[2])==0){
+                    xmlChar* oct = xmlNodeGetContent(temp);
+                    res[0] = reinterpret_cast<char*>(oct);
+                } else if(xmlStrcmp(temp->name, attribPhrases[3])==0){
+                    xmlChar* step = xmlNodeGetContent(temp);
+                    res[1] = reinterpret_cast<char*>(step);
+                }
+                temp = temp->next;
+            }
+        }  
 
-std::array<unsigned char*, 3> noteParser(xmlNode* noteNode){
+        sent = sent->next;
+    }
+    return res;
+}
+
+std::array<std::string, 3> noteParser(xmlNode* noteNode){
     //Ret {octave (range), step (key), duration (4 means 4 (((divisions))), or 1 whole note)}
 
-    std::array<unsigned char*, 3> res = {NULL, NULL, NULL};
-
-    unsigned char a[] = "pitch";
-    unsigned char b[] = "octave";
-    unsigned char c[] = "step";
-    unsigned char d[] = "duration";
+    std::array<std::string, 3> res = {"", "", ""};
+    const unsigned char* notePhrases[] =  {
+        USTR("pitch"), 
+        USTR("octave"), 
+        USTR("step"), 
+        USTR("duration")
+    };
 
     xmlNode* sent = noteNode->children;
     while(sent){
 
-        if(sent->name == a){
+        if(xmlStrcmp(sent->name, notePhrases[0])==0){
             xmlNode* temp = sent->children;
             while(temp){
-                if(temp->name == b){
-                    res[0] = xmlNodeGetContent(temp);
-                } else if(temp->name == c){
-                    res[1] = xmlNodeGetContent(temp);
+                if(xmlStrcmp(temp->name, notePhrases[1])==0){
+                    xmlChar* oct = xmlNodeGetContent(temp);
+                    res[0] = reinterpret_cast<char*>(oct);
+                } else if(xmlStrcmp(temp->name, notePhrases[2])==0){
+                    xmlChar* step = xmlNodeGetContent(temp);
+                    res[1] = reinterpret_cast<char*>(step);
                 }
                 temp = temp->next;
             }
 
-        } else if(sent->name == d){
-            res[2] = xmlNodeGetContent(sent);
+        } else if(xmlStrcmp(sent->name, notePhrases[3])==0){
+            xmlChar* dur = xmlNodeGetContent(sent);
+            res[2] = reinterpret_cast<char*>(dur);
         }
 
         sent = sent->next;
     }
-    std::cout << "fin np" << std::endl;
-
     return res;
     
 }
 
-void parseXml(xmlNode * a_node, int depth = 0)
+void parseXml(xmlNode* a_node, std::vector<std::string>& res)
 {   
-    const unsigned char note[] = "note";
-    std::array<unsigned char*, 3> temp;
-    if (a_node != NULL){
+    const unsigned char* genPhrases[] =  {
+        USTR("attributes"), 
+        USTR("note"), 
+    };
 
+
+    std::array<std::string, 3> temp;
+    if (a_node != NULL){
         if (a_node->type==XML_TEXT_NODE) return;
 
-        std::cout << a_node->name << std::endl;
-        if(xmlStrcmp(a_node->name, note)==0){
-            std::cout << "hit" << std::endl;
-            temp = noteParser(a_node);
-            std::cout << "postnp" << std::endl;
 
-            // SEGFAULTS
-            for(int i=0; i < 3; i++){
-                std::cout << temp[i] << std::endl;
+        if(xmlStrcmp(a_node->name, genPhrases[0])==0){ //ATTRIB CATCH
+            temp = attribParser(a_node);
+            res.push_back("ATTRIB");
+            for(std::string x: temp){
+                res.push_back(x);
             }
-            std::cout << std::endl;
-        }
-
-        if(a_node->children){
+        } else if(xmlStrcmp(a_node->name, genPhrases[1])==0){ //NOTE CATCH
+            temp = noteParser(a_node);
+            res.push_back("NOTE");
+            for(std::string x: temp){
+                res.push_back(x);
+            }
+        } else if (a_node->children){
             xmlNode* sent = a_node->children;
             while(sent!=NULL){
-                parseXml(sent, 0);
+                parseXml(sent, res);
                 sent = sent->next; 
             }
         } 
-        
-
     }
 
 }
@@ -162,8 +200,15 @@ int main() {
         return -1;
     }
     root_element = xmlDocGetRootElement(doc);
-    // traverseXml(root_element);
-    parseXml(root_element);
+    std::vector<std::string> res;;
+
+
+    parseXml(root_element, res);
+
+    for(std::string x: res){
+        std::cout << x << " "; 
+    }
+    std::cout << std::endl;
 
     xmlFreeDoc(doc);
     xmlCleanupParser();
