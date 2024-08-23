@@ -6,3 +6,10 @@ run:
 
 clean:
 	rm -f ./build/main
+
+
+dingo:
+	g++ -std=c++11 -I/opt/homebrew/include/libxml2 -L/opt/homebrew/lib -lxml2 ./src/mxml_parser.cpp -o ./build/mxml_parser
+
+rundingo:
+	./build/mxml_parser
