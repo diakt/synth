@@ -15,3 +15,14 @@ TODO (Need demos):
 5) Make well tempered clavier song
 6) Make keyboard
 7) Make blue pink brown noise
+
+
+
+
+# Schemas
+
+part -> measures -> arr[chords]
+measures = unordered_map<int, arr[chords]>
+arr[chords] = [chord, chord, chord]
+chord = std::vector<freq>
+compress note note note to chord "abc" string in vec
