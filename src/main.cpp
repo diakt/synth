@@ -21,11 +21,10 @@ int main() {
     float vol = 1.0f;
 
 
-
     char* fn = getFileName();
     // int32_t *audioData = generateSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels should be 1
     // int32_t *audioData = generateStereoSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels must be 2
-    float *audioData = generateMultiSineWave(nSampleRate, nNumSeconds, nNumChannels, 4, vol); 
+    // float *audioData = generateMultiSineWave(nSampleRate, nNumSeconds, nNumChannels, 4, vol); 
     std::pair<int, float*> stuff = mxmlFactory(mxml, nSampleRate, nNumChannels);
     int nNumSamples = stuff.first;
 

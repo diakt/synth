@@ -14,13 +14,13 @@
 //ENUM
 
 std::unordered_map<std::string, int> keyMap = {
-    {"C", 0},
-    {"D", 2},
-    {"E", 4},
-    {"F", 5},
-    {"G", 6},
-    {"A", 8},
-    {"B", 10}
+    {"A", 0},
+    {"B", 2},
+    {"C", 3},
+    {"D", 5},
+    {"E", 7},
+    {"F", 8},
+    {"G", 10}
 };
 
 
@@ -262,27 +262,24 @@ std::pair<int, float*> mxmlFactory(std::vector<std::string>& mxml, int nSampleRa
     //generate part notes
     std::vector<std::pair<int, float>> frequencies = {};
     int nNotes = process(mxml, frequencies);
-    int nNoteLength = nSampleRate/4;
-    std::cout << "nNotes nNoteLength nNumChannels " << nNotes << " " << nNoteLength << " " << nNumChannels << std::endl;
+    int nBaseNoteLength = nSampleRate/4; //should later be connected to measure attrib
+    std::cout << "nNotes nBaseNoteLength nNumChannels " << nNotes << " " << nBaseNoteLength << " " << nNumChannels << std::endl;
 
-    int nNumSamples = nNotes * nNoteLength * nNumChannels;
+    int nNumSamples = nNotes * nBaseNoteLength * nNumChannels;
     float *audioData = new float[nNumSamples];
 
     float t;
-    float norm = 1.0f; // /frequencies.size();
-    int p = 0;
-    int ap = 0;
-    int endp = 0;
+    float norm = 1.0f; // /frequencies.size() previously to account for multiple note amp weighting. Eventually will be some sort of tracking current notes run on all players
+    int p = 0, ap = 0, endp = 0;
     int fl = frequencies.size();
     std::pair<int, float> curr;
+    float fPhase = 0;
 
     while (p < fl){
         curr = frequencies[p];
-        endp = ap+curr.first*nNoteLength;
-        std::cout << "start end " << ap << " " << endp << std::endl;
+        endp = ap+curr.first*nBaseNoteLength*nNumChannels;
         for (int i=ap; i < endp; i++){
-            t = static_cast<float>(i)/nSampleRate;
-            audioData[i]+=norm*std::sin(2 * M_PI * curr.second * t);
+            audioData[i]+=advanceOscillator_Sine(fPhase, curr.second, nSampleRate); //avoiding clipping
         }
         p+=1;
         ap = endp;
