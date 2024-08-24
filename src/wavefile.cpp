@@ -9,6 +9,20 @@
 #include <iostream>
 #include <type_traits>
 #include <typeinfo>
+#include <unordered_map>
+
+//ENUM
+
+std::unordered_map<std::string, int> keyMap = {
+    {"C", 0},
+    {"D", 2},
+    {"E", 4},
+    {"F", 5},
+    {"G", 6},
+    {"A", 8},
+    {"B", 10}
+};
+
 
 // FILE UTILS
 
@@ -225,20 +239,53 @@ float* generateMultiSineWave(int nSampleRate, int nNumSeconds, int nNumChannels,
 }
 
 
-// float t = static_cast<float>(i) / nSampleRate;
+int process(std::vector<std::string>&mxml, std::vector<std::pair<int, float>>& frequencies){
+    int pos = 0;
+    for(int i=0; i < mxml.size(); i++){
+        if (mxml[i]=="NOTE"){
+            std::pair<int, float> curr = {1, 1.0f};
+            curr.first = std::stoi(mxml[i+3]);
+            int oct = std::stoi(mxml[i+1]);
+            int note = keyMap[mxml[i+2]];
+            curr.second = getFreq(oct, note);
+            pos+=curr.first;
+            
+            frequencies.push_back(curr);
+        }
+    }
+    return pos;
+}
 
-        // Combine two frequencies in a single sine wave
-        // float sample = std::sin(2 * M_PI * freq1 * t) + std::sin(2 * M_PI * freq2 * t);
 
-        // Normalize to prevent clipping
-        // sample *= 0.5f;
+std::pair<int, float*> mxmlFactory(std::vector<std::string>& mxml, int nSampleRate, int nNumChannels){
 
+    //generate part notes
+    std::vector<std::pair<int, float>> frequencies = {};
+    int nNotes = process(mxml, frequencies);
+    int nNoteLength = nSampleRate/4;
+    std::cout << "nNotes nNoteLength nNumChannels " << nNotes << " " << nNoteLength << " " << nNumChannels << std::endl;
 
+    int nNumSamples = nNotes * nNoteLength * nNumChannels;
+    float *audioData = new float[nNumSamples];
 
+    float t;
+    float norm = 1.0f; // /frequencies.size();
+    int p = 0;
+    int ap = 0;
+    int endp = 0;
+    int fl = frequencies.size();
+    std::pair<int, float> curr;
 
-
-float* generateFactory(){
-    float *audioData = new float[3];
-
-    return audioData;
+    while (p < fl){
+        curr = frequencies[p];
+        endp = ap+curr.first*nNoteLength;
+        std::cout << "start end " << ap << " " << endp << std::endl;
+        for (int i=ap; i < endp; i++){
+            t = static_cast<float>(i)/nSampleRate;
+            audioData[i]+=norm*std::sin(2 * M_PI * curr.second * t);
+        }
+        p+=1;
+        ap = endp;
+    }
+    return std::pair<int, float*>{nNumSamples, audioData};
 }

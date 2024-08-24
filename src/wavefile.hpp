@@ -83,4 +83,5 @@ float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, floa
 
 float* generateMultiSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, int nNotes, float vol);
 
+std::pair<int, float*> mxmlFactory(std::vector<std::string>& mxml, int nSampleRate, int nNumChannels);
 #endif  // WAVEFILE_HPP

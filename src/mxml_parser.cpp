@@ -144,7 +144,7 @@ std::array<std::string, 3> noteParser(xmlNode* noteNode){
     
 }
 
-void parseXml(xmlNode* a_node, std::vector<std::string>& res)
+void dfs(xmlNode* a_node, std::vector<std::string>& res)
 {   
     const unsigned char* genPhrases[] =  {
         USTR("attributes"), 
@@ -172,7 +172,7 @@ void parseXml(xmlNode* a_node, std::vector<std::string>& res)
         } else if (a_node->children){
             xmlNode* sent = a_node->children;
             while(sent!=NULL){
-                parseXml(sent, res);
+                dfs(sent, res);
                 sent = sent->next; 
             }
         } 
@@ -182,36 +182,29 @@ void parseXml(xmlNode* a_node, std::vector<std::string>& res)
 
 
 
+std::vector<std::string> parseXml(const std::string& pfn){
 
-
-
-
-
-
-
-int main() {
+    std::vector<std::string> res;
     xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
 
-    doc = xmlReadFile("./res/helloworld.musicxml", NULL, 0);
+    std::string mfn = "./res/" + pfn;
+    const char* fn = mfn.c_str();
+
+    doc = xmlReadFile(fn, NULL, 0);
 
     if (doc == NULL) {
         std::cout << "Error: could not parse file" << std::endl;
-        return -1;
+        return res;
     }
+
+
     root_element = xmlDocGetRootElement(doc);
-    std::vector<std::string> res;;
-
-
-    parseXml(root_element, res);
-
-    for(std::string x: res){
-        std::cout << x << " "; 
-    }
-    std::cout << std::endl;
-
+    dfs(root_element, res);
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
-    return 0;
+    return res;
 }
+
+
