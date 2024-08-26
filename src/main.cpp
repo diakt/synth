@@ -7,36 +7,33 @@
 
 int main() {
 
-    //INTAKE OF MXML FILE
-    std::string mfn = "chords";
-    std::vector<Part> mxml = parseXml(mfn);
-    // std::cout << "mxml size: " << mxml.size() << std::endl;
-    std::cout << "part measurenum " << mxml[0].measures.size() << std::endl;
-    // std::cout << "part first measure chords " << mxml[0].measures[0].chords.size() << std::endl;
+    //Scoreparsing from musicxml
+    std::string inputMxml = "chords";
+    std::vector<Part> mxml = parseXml(inputMxml);
 
+    //Config for file generation
+    std::unordered_map<std::string, int> config {
+        {"nSampleRate", 44100},
+        {"nNumChannels", 1},
+        {"volume", 1},
+    };
 
-    std::unordered_map<std::string, int> config;
-    config["nSampleRate"] = 44100;
-    config["nNumChannels"] = 1;
-    config["volume"] = 1;
+    //Gen float array
+    float* audioData = mxmlFactory(mxml, config);
 
-    char* fn = getFileName(mfn);
-    std::pair<int, float*> stuff = mxmlFactory(mxml, config);
-    int nNumSamples = stuff.first;
-
+    //Define and write to fn
+    char* outputFile = getFileName(inputMxml);
     bool success = WriteWaveFile<int32_t>(
-        fn,
-        stuff.second, 
-        static_cast<int32_t>(config["nNumSamples"]), 
+        outputFile,
+        audioData, 
+        static_cast<int32_t>(config["nNumSamples"]),  //note nNumSamples is added  in mxmlFac
         static_cast<int16_t>(config["nNumChannels"]), 
         static_cast<int32_t>(config["nSampleRate"])
     );
 
-    if (success) {
-        std::cout << "Wave file written successfully." << std::endl;
-    } else {
+    if (!success) {
         std::cout << "Failed to write wave file." << std::endl;
-    }
-
+        return 1;
+    } 
     return 0;
 }

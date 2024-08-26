@@ -41,8 +41,6 @@ char *getFileName(std::string& fn) {
     auto now = std::chrono::system_clock::now();
     long now_c = std::chrono::system_clock::to_time_t(now);
 
-    std::cout << "Current Unix: " << now_c << std::endl;
-
     std::string str = std::to_string(now_c);
     char *char_arr = new char[str.length() + 1];
     std::strcpy(char_arr, str.c_str());
@@ -270,37 +268,6 @@ int process(std::vector<std::string>&mxml, std::vector<std::pair<int, float>>& f
     return pos;
 }
 
-
-std::pair<int, float*> mxmlFactory(std::vector<std::string>& mxml, int nSampleRate, int nNumChannels){
-
-    //generate part notes
-    std::vector<std::pair<int, float>> frequencies = {};
-    int nNotes = process(mxml, frequencies);
-    int nBaseNoteLength = nSampleRate/4; //should later be connected to measure attrib
-    std::cout << "nNotes nBaseNoteLength nNumChannels " << nNotes << " " << nBaseNoteLength << " " << nNumChannels << std::endl;
-
-    int nNumSamples = nNotes * nBaseNoteLength * nNumChannels;
-    float *audioData = new float[nNumSamples];
-
-    float t;
-    float norm = 1.0f; // /frequencies.size() previously to account for multiple note amp weighting. Eventually will be some sort of tracking current notes run on all players
-    int p = 0, ap = 0, endp = 0;
-    int fl = frequencies.size();
-    std::pair<int, float> curr;
-    float fPhase = 0;
-
-    while (p < fl){
-        curr = frequencies[p];
-        endp = ap+curr.first*nBaseNoteLength*nNumChannels;
-        for (int i=ap; i < endp; i++){
-            audioData[i]+=advanceOscillator_Sine(fPhase, curr.second, nSampleRate); //avoiding clipping
-        }
-        p+=1;
-        ap = endp;
-    }
-    return std::pair<int, float*>{nNumSamples, audioData};
-}
-
 int maxMeasure(std::vector<Part>& mxml){
     //what is the highest measure? e.g. 64 bars
     int maxM = 0;
@@ -319,34 +286,29 @@ std::unordered_map<int,int> getWeights(std::vector<Part>& mxml, std::unordered_m
     std::unordered_map<int, int> partWeight {{0,0}};
     int currMeasurePos;
     int baseNoteLength;
+    int measurePlace;
+    int chordStart, chordEnd, chordCard;
     for(Part& currPart: mxml){
+        std::cout << "Partname: " << currPart.partName << std::endl;
         for(Measure& currMeasure: currPart.measures){
             currMeasurePos = (currMeasure.measurePos-1)*config["nSampleRate"]; //mxml is 1-indexed
-            // std::cout << "a.d " << currMeasure.attributes.divisions << std::endl;
             baseNoteLength = config["nSampleRate"]*currMeasure.attributes.divisions/currMeasure.attributes.beats; //if 4, on 
-            // std::cout << "cmP bNL " << currMeasurePos << " " << baseNoteLength << std::endl;
-            int measurePlace = currMeasurePos;
+            measurePlace = currMeasurePos;
             for(Chord& currChord: currMeasure.chords){
-                int chordStart = measurePlace;
-                int chordEnd = measurePlace + (currChord.duration*baseNoteLength); // how far to step
-                int chordCard = currChord.octNotes.size(); //number notes in chord
-                
-                std::cout << "d cS cE " << currChord.duration << " " << chordStart << " " << chordEnd << std::endl;
-                std::cout << "chordCard " << chordCard << std::endl;
+                chordStart = measurePlace; //this does it
+                chordEnd = chordStart + (currChord.duration*baseNoteLength); // how far to step
+                chordCard = currChord.octNotes.size(); //number notes in chord
+                // std::cout << "d cS cE chordCard" << currChord.duration << " " << chordStart << " " << chordEnd <<  " " << chordCard << std::endl;
 
-
-                //no, this is obviously not optimal.
+                //TODO - Necessary with current sequential part parsing approach, change to skips on rfx
                 for(int i=chordStart; i < chordEnd; i++){
                     if(partWeight.find(i) == partWeight.end()){
                         partWeight[i] = 0;
                     } 
                     partWeight[i] += chordCard;
-                    
                 }
                 measurePlace = chordEnd;
-
             }
-
         }
     }
     std::cout << "end partWeight \n\n" <<std::endl;
@@ -355,13 +317,12 @@ std::unordered_map<int,int> getWeights(std::vector<Part>& mxml, std::unordered_m
 
 
 
-std::pair<int,float*> mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config){
+float* mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config){
+    //additional params 
     int measureCount = maxMeasure(mxml);
     std::unordered_map<int, int> partWeight = getWeights(mxml, config);
-    //for now, one measure per second
-    int measureLength = measureCount;
-    int nSampleRate = config["nSampleRate"];
-    int nDataL = measureLength * config["nSampleRate"] * config["nNumChannels"];
+
+    int nDataL = measureCount * config["nSampleRate"] * config["nNumChannels"];
     float* audioData = new float[nDataL];
     config["nNumSamples"] = nDataL;
 
@@ -395,14 +356,12 @@ std::pair<int,float*> mxmlFactory(std::vector<Part>& mxml, std::unordered_map<st
 
                 float t;
                 float fPhase = 0;
-                for(int i=chordStart; i < chordEnd; i++){
-                    t = static_cast<float>(i)/nSampleRate;
-                    // std::cout << "partWeight " << i << " " << partWeight[i] << std::endl;
+                for(int i=chordStart; i < chordEnd; ++i){
+                    t = static_cast<float>(i)/config["nSampleRate"];
                     float norm = 1.0f/partWeight[i];
-                    // if (norm < 0.1f || norm > 1.0f) std::cout << norm << std::endl;
                     for (float& currNote: chordFreq){
                         // audioData[i] += advanceOscillator_Sine(fPhase, currNote, nSampleRate); //still clips but recog
-                        audioData[i] += norm*std::sin(2*M_PI*currNote*t); //terrible sound q
+                        audioData[i] += norm*std::sin(2*M_PI*currNote*t); //Still clips but passable
                     }
 
                 }
@@ -416,6 +375,6 @@ std::pair<int,float*> mxmlFactory(std::vector<Part>& mxml, std::unordered_map<st
         }
     }
     
-    return std::pair<int, float*>{nDataL, audioData};
+    return audioData;
 
 }
