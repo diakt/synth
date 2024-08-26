@@ -8,141 +8,19 @@
 
 #define USTR(x) (const unsigned char*)(x)
 
-bool hasElementChildren(xmlNode* node){
-    xmlNode* child = node->children;
-    while(child){
-        if(child->type == XML_ELEMENT_NODE){
-            return true;
-        }
-        child = child->next;
-    }
-    return false;
+//TEMP TYPE UTILS
+int xmlStrContToInt(xmlNode* node){
+    xmlChar* cont = xmlNodeGetContent(node);
+    size_t contL = xmlStrlen(cont);
+    std::string temp(reinterpret_cast<const char*>(cont), contL);
+    return std::stoi(temp);
 }
 
-
-
-void traverseXml(xmlNode * a_node, int depth = 0)
-{   
-    xmlKeepBlanksDefault(0);
-    if (a_node != NULL){
-
-        if (a_node->type==XML_TEXT_NODE) return;
-
-        std::cout << a_node->name << ": "; //<< a_node->type << std::endl;
-        if(a_node->type==XML_ELEMENT_NODE) std::cout << "XML_ELEMENT_NODE";
-        else if(a_node->type==XML_ATTRIBUTE_NODE) std::cout << "XML_ATTRIBUTE_NODE";
-        else if(a_node->type==XML_TEXT_NODE) std::cout << "XML_TEXT_NODE";
-        else std::cout << "XML_IDK_NODE "<< a_node->type;
-        std::cout << std::endl;
-
-        //attributes
-        if(a_node->properties !=NULL){
-            xmlAttr* props = a_node->properties;
-            std::cout << "PROPS:" << std::endl;
-            while(props!=NULL){
-                xmlChar* val = xmlNodeListGetString(a_node->doc, props->children, 1);
-                std::cout << props->name << ": " << val<< std::endl;
-                xmlFree(val);
-                props = props->next;
-            }
-        }
-
-        if (!hasElementChildren(a_node)){
-            //content
-            xmlChar* content = xmlNodeGetContent(a_node);
-            if(content && xmlStrlen(content) > 0){
-                std::cout << "CONTENT: ";
-                std::cout << sizeof(content) << " <" << content << "> " << std::endl;
-            }
-        }
-        
-
-
-        std::cout << std::endl;
-        
-        
-        if(a_node->children){
-            xmlNode* sent = a_node->children;
-            while(sent!=NULL){
-                traverseXml(sent, 0);
-                sent = sent->next; 
-            }
-        } 
-        
-
-    }
-
-}
-
-std::array<std::string, 3> attribParser(xmlNode* attribNode){
-    std::array<std::string, 3> res = {"", "", ""};
-    const unsigned char* attribPhrases[] =  {
-        USTR("divisions"), 
-        USTR("time"), 
-        USTR("beats"), 
-        USTR("beat-type")
-    };
-
-    xmlNode* sent = attribNode->children;
-    while(sent){
-        if(xmlStrcmp(sent->name, attribPhrases[0])==0){
-            xmlChar* dur = xmlNodeGetContent(sent);
-            res[2] = reinterpret_cast<char*>(dur);
-        } else if(xmlStrcmp(sent->name, attribPhrases[1])==0){
-            xmlNode* temp = sent->children;
-            while(temp){
-                if(xmlStrcmp(temp->name, attribPhrases[2])==0){
-                    xmlChar* oct = xmlNodeGetContent(temp);
-                    res[0] = reinterpret_cast<char*>(oct);
-                } else if(xmlStrcmp(temp->name, attribPhrases[3])==0){
-                    xmlChar* step = xmlNodeGetContent(temp);
-                    res[1] = reinterpret_cast<char*>(step);
-                }
-                temp = temp->next;
-            }
-        }  
-
-        sent = sent->next;
-    }
-    return res;
-}
-
-std::array<std::string, 3> noteParser(xmlNode* noteNode){
-    //Ret {octave (range), step (key), duration (4 means 4 (((divisions))), or 1 whole note)}
-    //TODO - Must add chord flag to figure out whether or not to add
-
-    std::array<std::string, 3> res = {"", "", ""};
-    const unsigned char* notePhrases[] =  {
-        USTR("pitch"), 
-        USTR("octave"), 
-        USTR("step"), 
-        USTR("duration")
-    };
-
-    xmlNode* sent = noteNode->children;
-    while(sent){
-
-        if(xmlStrcmp(sent->name, notePhrases[0])==0){
-            xmlNode* temp = sent->children;
-            while(temp){
-                if(xmlStrcmp(temp->name, notePhrases[1])==0){
-                    xmlChar* oct = xmlNodeGetContent(temp);
-                    res[0] = reinterpret_cast<char*>(oct);
-                } else if(xmlStrcmp(temp->name, notePhrases[2])==0){
-                    xmlChar* step = xmlNodeGetContent(temp);
-                    res[1] = reinterpret_cast<char*>(step);
-                }
-                temp = temp->next;
-            }
-
-        } else if(xmlStrcmp(sent->name, notePhrases[3])==0){
-            xmlChar* dur = xmlNodeGetContent(sent);
-            res[2] = reinterpret_cast<char*>(dur);
-        }
-
-        sent = sent->next;
-    }
-    return res;
+std::string xmlStrContToStr(xmlNode* node){
+    xmlChar* cont = xmlNodeGetContent(node);
+    size_t contL = xmlStrlen(cont);
+    std::string temp(reinterpret_cast<const char*>(cont), contL);
+    return temp;
 }
 
 
@@ -160,74 +38,122 @@ MeasureAttribute measureAttributeParser(xmlNode* attribNode){
         xmlNode* sent = attribNode->children;
         while(sent){
             if(xmlStrcmp(sent->name, attribPhrases[0])==0){ //divisions
-
-                // size_t propL = xmlStrlen(measureId);
-                // std::string temp = reinterpret_cast<const char*>(measureId, propL);
-                // thisMeasure.measurePos = std::stoi(temp);
-
-                
-                xmlChar* dur = xmlNodeGetContent(sent);
-                size_t contentL = xmlStrlen(dur);
-                std::string temp = reinterpret_cast<const char*>(dur, contentL);
-                thisAttribute.divisions = std::stoi(temp);
-
+                thisAttribute.divisions = xmlStrContToInt(sent);
             } else if(xmlStrcmp(sent->name, attribPhrases[1])==0){ //time
                 xmlNode* temp = sent->children;
                 while(temp){
                     if(xmlStrcmp(temp->name, attribPhrases[2])==0){
-                        xmlChar* oct = xmlNodeGetContent(temp);
-                        size_t contentL = xmlStrlen(oct);
-                        std::string temp = reinterpret_cast<const char*>(oct, contentL);
-                        thisAttribute.beats = std::stoi(temp);
-
+                        thisAttribute.beats = xmlStrContToInt(temp);
                     } else if(xmlStrcmp(temp->name, attribPhrases[3])==0){
-                        xmlChar* step = xmlNodeGetContent(temp);
-                        size_t contentL = xmlStrlen(step);
-                        std::string temp = reinterpret_cast<const char*>(step, contentL);
-                        thisAttribute.beatType = std::stoi(temp);
+                        thisAttribute.beatType = xmlStrContToInt(temp);
                     }
                     temp = temp->next;
                 }
             }  
-
             sent = sent->next;
         }
     }
-
     return thisAttribute;
 }
 
-
-Chord chordParser(xmlNode* chord){
+std::pair<bool, Chord> chordParser(xmlNode* chordNode){
+    bool isChord;
     Chord thisChord;
 
-    return thisChord;
-}
+    if(chordNode){
+        const unsigned char* chordPhrases[] =  {
+            USTR("pitch"), 
+            USTR("octave"), 
+            USTR("step"), 
+            USTR("duration"),
+            USTR("chord"),
+        };
 
+        xmlNode* sent = chordNode->children;
+        std::pair<int, std::string> currNote;
+        while(sent){
+
+            if(xmlStrcmp(sent->name, chordPhrases[0])==0){ //pitch
+                //std::cout << "pitch found " << std::endl;
+                xmlNode* temp = sent->children;
+                while(temp){
+                    if(xmlStrcmp(temp->name, chordPhrases[1])==0){ //octave
+                        currNote.first = xmlStrContToInt(temp);
+                    } else if(xmlStrcmp(temp->name, chordPhrases[2])==0){ //step
+                        currNote.second = xmlStrContToStr(temp);
+                    }
+                    temp = temp->next;
+                }
+            } else if(xmlStrcmp(sent->name, chordPhrases[3])==0){ //duration
+                thisChord.duration = xmlStrContToInt(sent);
+            } else if(xmlStrcmp(sent->name, chordPhrases[4])==0){ //chord flag
+                isChord = true;
+            }
+            sent = sent->next;
+        }
+        thisChord.octNotes.push_back(currNote);
+    }
+    return std::pair<bool, Chord>(isChord, thisChord);
+}
 
 Measure measureParser(xmlNode* measureNode){
     Measure thisMeasure;
 
     if(measureNode){
         const unsigned char* measurePhrases[] =  {
-            USTR("number"), 
+            USTR("number"),
+            USTR("attributes"), 
+            USTR("note"),
         };
 
-        xmlChar* measureId = xmlGetProp(measureNode, measurePhrases[0]);
-        if(measureId){
-            size_t propL = xmlStrlen(measureId);
-            std::string temp = reinterpret_cast<const char*>(measureId, propL);
+
+
+        xmlChar* measureNumber = xmlGetProp(measureNode, measurePhrases[0]);
+        if(measureNumber){
+            size_t propL = xmlStrlen(measureNumber);
+            std::string temp(reinterpret_cast<const char*>(measureNumber), propL);
             thisMeasure.measurePos = std::stoi(temp);
         } else {
-            thisMeasure.measurePos = 0; //not good
+            thisMeasure.measurePos = -69;
         }
 
+
         bool chordFlag = 0;
+        xmlNode* sent = measureNode->children;
+        std::pair<bool, Chord> ret;
+        while(sent){
+            if(xmlStrcmp(sent->name, measurePhrases[1])==0){    //attributes
+                thisMeasure.attributes = measureAttributeParser(sent);
+
+            } else if(xmlStrcmp(sent->name, measurePhrases[2])==0){     //note
+                ret = chordParser(sent);
+                //std::cout << "chordParser called and prod " << ret.second.octNotes.size() << " " << ret.second.duration << std::endl;
+                
+                if(ret.first){ //indicates chord found
+                    if(!chordFlag){ //no current chord, so new elt to chords
+                        chordFlag = 1;
+                        thisMeasure.chords.push_back(ret.second);
+                    } else { //indicated chord
+                        thisMeasure.chords[thisMeasure.chords.size()-1].octNotes.push_back(ret.second.octNotes[0]);
+                    }
+
+                } else {
+                    thisMeasure.chords.push_back(ret.second);
+                    chordFlag = 0;
+                }
+            }
+            sent = sent->next;
+        }
+
+        
 
     }
+    //std::cout << "does thisMeasure have any chords... " << thisMeasure.chords.size() << std::endl;
+    // for(Chord& ch: thisMeasure.chords){
+    //     std::cout << "Chord: " << ch.octNotes[0].first << " " << ch.octNotes[0].second << " " << ch.duration << std::endl;
+    // }
     return thisMeasure;
 }
-
 
 Part partParser(xmlNode* partNode){
     // get the part from the node content. That is the key to the val
@@ -250,7 +176,7 @@ Part partParser(xmlNode* partNode){
         xmlNode* child = partNode->children;
         while(child){
             if(child->type!=XML_TEXT_NODE){ //not just a placeholder
-                std::cout << "partParser childname = " << child->name << std::endl;
+                //std::cout << "partParser childname = " << child->name << std::endl;
                 if (xmlStrcmp(child->name, partPhrases[1])==0){ //this is a part
                     thisPart.measures.push_back(measureParser(child));
                 }
@@ -262,52 +188,30 @@ Part partParser(xmlNode* partNode){
     return thisPart;
 }
 
-void mxml_parser(xmlNode* node, std::vector<Part>& partList){
-    //parse from main node to separate out parts
-}
+std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList){
+    std::vector<Part> thisPartwise;
+    if(node){
+        const unsigned char* mainPhrases[] =  {
+            USTR("part"), 
+        };
 
-
-void dfs(xmlNode* a_node, std::vector<std::string>& res)
-{   
-    const unsigned char* genPhrases[] =  {
-        USTR("attributes"), 
-        USTR("note"), 
-    };
-
-
-    std::array<std::string, 3> temp;
-    if (a_node != NULL){
-        if (a_node->type==XML_TEXT_NODE) return;
-
-
-        if(xmlStrcmp(a_node->name, genPhrases[0])==0){ //ATTRIB CATCH
-            temp = attribParser(a_node);
-            res.push_back("ATTRIB");
-            for(std::string x: temp){
-                res.push_back(x);
-            }
-        } else if(xmlStrcmp(a_node->name, genPhrases[1])==0){ //NOTE CATCH
-            temp = noteParser(a_node);
-            res.push_back("NOTE");
-            for(std::string x: temp){
-                res.push_back(x);
-            }
-        } else if (a_node->children){
-            xmlNode* sent = a_node->children;
-            while(sent!=NULL){
-                dfs(sent, res);
-                sent = sent->next; 
-            }
-        } 
+        xmlNode* child = node->children;
+        while(child){
+            if(child->type!=XML_TEXT_NODE){ //not just a placeholder
+                if (xmlStrcmp(child->name, mainPhrases[0])==0){ //this is a part
+                    //std::cout << "part detected " << std::endl;
+                    thisPartwise.push_back(partParser(child));
+                }
+            } 
+            child = child->next;
+        }
     }
-
+    return thisPartwise;
 }
 
+std::vector<Part> parseXml(const std::string& pfn){
 
-
-std::vector<std::string> parseXml(const std::string& pfn){
-
-    std::vector<std::string> res;
+    std::vector<Part> res;
     xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
 
@@ -321,9 +225,8 @@ std::vector<std::string> parseXml(const std::string& pfn){
         return res;
     }
 
-
     root_element = xmlDocGetRootElement(doc);
-    dfs(root_element, res);
+    res = partwiseParser(root_element, res);
     xmlFreeDoc(doc);
     xmlCleanupParser();
 

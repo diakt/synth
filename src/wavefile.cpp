@@ -1,4 +1,5 @@
 #include "wavefile.hpp"
+#include "mxml_parser.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -285,4 +286,115 @@ std::pair<int, float*> mxmlFactory(std::vector<std::string>& mxml, int nSampleRa
         ap = endp;
     }
     return std::pair<int, float*>{nNumSamples, audioData};
+}
+
+int maxMeasure(std::vector<Part>& mxml){
+    //what is the highest measure? e.g. 64 bars
+    int maxM = 0;
+    for (Part& x: mxml){
+        for ( Measure& y: x.measures ){ //could just take -1
+            // std::cout << "maxMeasure measurePos val " << y.measurePos << std::endl;
+            maxM = std::max(maxM, y.measurePos);
+        }
+    }
+    return maxM;
+}
+
+std::unordered_map<int,int> getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config){
+
+    //calculate relevant weightings of notes (more means cut amplitude to avoid clipping)
+    std::unordered_map<int, int> partWeight {{0,0}};
+    int currMeasurePos;
+    int baseNoteLength;
+    for(Part& currPart: mxml){
+        for(Measure& currMeasure: currPart.measures){
+            currMeasurePos = (currMeasure.measurePos-1)*config["nSampleRate"]; //mxml is 1-indexed
+            // std::cout << "a.d " << currMeasure.attributes.divisions << std::endl;
+            baseNoteLength = config["nSampleRate"]*currMeasure.attributes.divisions/currMeasure.attributes.beats; //if 4, on 
+            // std::cout << "cmP bNL " << currMeasurePos << " " << baseNoteLength << std::endl;
+            int measurePlace = 0;
+            for(Chord& currChord: currMeasure.chords){
+                int chordStart = measurePlace;
+                int chordEnd = measurePlace + (currChord.duration*baseNoteLength); // how far to step
+                int chordCard = currChord.octNotes.size(); //number notes in chord
+                
+                std::cout << "d cS cE " << currChord.duration << " " << chordStart << " " << chordEnd << std::endl;
+
+
+
+                //no, this is obviously not optimal.
+                for(int i=chordStart; i < chordEnd; i++){
+                    if(partWeight.find(chordStart) == partWeight.end()){
+                        partWeight[chordStart] = chordEnd;
+                    } else {
+                        partWeight[chordStart] += chordEnd;
+                    }
+                }
+                measurePlace = chordEnd;
+
+            }
+
+        }
+    }
+    return partWeight;
+}
+
+
+
+std::pair<int,float*> mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config){
+    int measureCount = maxMeasure(mxml);
+    std::unordered_map<int, int> partWeight = getWeights(mxml, config);
+    //for now, one measure per second
+    int measureLength = 1; //seconds
+    int nSampleRate = config["nSampleRate"];
+    int nDataL = measureLength * config["nSampleRate"] * config["nNumChannels"];
+    float* audioData = new float[nDataL];
+    config["nNumSamples"] = nDataL;
+
+    //add audio
+    int currMeasurePos;
+    int baseNoteLength;
+    int currNote = 0;
+    for(Part& currPart: mxml){
+        // std::cout << "mxmlFactory-currPart: " << currPart.partName << std::endl;
+        for(Measure& currMeasure: currPart.measures){
+            // std::cout << "mxmlFactory-currMeasure: " << currMeasure.measurePos << std::endl;
+            currMeasurePos = (currMeasure.measurePos-1)*config["nSampleRate"]; //mxml is 1-indexed
+            baseNoteLength = config["nSampleRate"]*currMeasure.attributes.divisions/currMeasure.attributes.beats; //if 4, on 
+
+            int measurePlace = currMeasurePos;
+            for(Chord& currChord: currMeasure.chords){
+                int chordStart = measurePlace;
+                int chordEnd = measurePlace + (currChord.duration*baseNoteLength); // how far to step
+                int duration = currChord.duration;
+                
+                std::vector<float> chordFreq {};
+                for(std::pair<int, std::string>& currNote: currChord.octNotes){
+                    chordFreq.push_back(getFreq(currNote.first, keyMap[currNote.second]));
+                }
+                std::cout << "cS cE " << chordStart << " " << chordEnd << std::endl;
+
+                float t;
+                float fPhase = 0;
+                for(int i=chordStart; i < chordEnd; i++){
+                    t = static_cast<float>(i)/nSampleRate;
+                    float norm = 1.0f/partWeight[i];
+                    for (float& currNote: chordFreq){
+                        audioData[i] += advanceOscillator_Sine(fPhase, currNote, nSampleRate); //still clips but recog
+                        // audioData[i] += norm*std::sin(2*M_PI*currNote*t); //terrible sound q
+                    }
+
+                }
+
+                measurePlace = chordEnd;
+                
+
+            }
+
+        
+        }
+    }
+    
+    return std::pair<int, float*>{nDataL, audioData};
+
 }

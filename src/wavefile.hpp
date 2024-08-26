@@ -1,11 +1,13 @@
 #ifndef WAVEFILE_HPP
 #define WAVEFILE_HPP
+#include "mxml_parser.hpp"
 
 #include <stdint.h>
+
 #include <vector>
+#include <unordered_map>
 
 char* getFileName();
-
 
 struct SMinimalWaveFileHeader {
     unsigned char m_szChunkID[4];
@@ -23,12 +25,10 @@ struct SMinimalWaveFileHeader {
     uint32_t m_nSubChunk2Size;
 };
 
-//TYPE UTILS
+// TYPE UTILS
 void convFromFloat(float fIn, uint8_t& tOut);
 void convFromFloat(float fIn, int16_t& tOut);
 void convFromFloat(float fIn, int32_t& tOut);
-
-
 
 // WRITE ARRAY TO FILE
 template <typename T>
@@ -37,9 +37,8 @@ bool WriteWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples
     if (!File) {
         return false;
     }
-    int32_t nBitsPerSample = sizeof(T)*8;
-    int nDataSize = nNumSamples*sizeof(T);
-
+    int32_t nBitsPerSample = sizeof(T) * 8;
+    int nDataSize = nNumSamples * sizeof(T);
 
     SMinimalWaveFileHeader waveHeader;
 
@@ -61,10 +60,9 @@ bool WriteWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples
 
     fwrite(&waveHeader, sizeof(SMinimalWaveFileHeader), 1, File);
 
-
-    //update to write
-    T *pData = new T[nNumSamples];
-    for(int i=0; i < nNumSamples; ++i){
+    // update to write
+    T* pData = new T[nNumSamples];
+    for (int i = 0; i < nNumSamples; ++i) {
         convFromFloat(floatData[i], pData[i]);
     }
 
@@ -84,4 +82,6 @@ float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, floa
 float* generateMultiSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, int nNotes, float vol);
 
 std::pair<int, float*> mxmlFactory(std::vector<std::string>& mxml, int nSampleRate, int nNumChannels);
+
+std::pair<int,float*> mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config);
 #endif  // WAVEFILE_HPP

@@ -3,37 +3,33 @@
 #include <iostream>
 #include <chrono>
 #include <string>
+#include <unordered_map>
 
 int main() {
 
     //INTAKE OF MXML FILE
-    std::string mfn = "helloworld.musicxml";
-    std::vector<std::string> mxml = parseXml(mfn);
+    std::string mfn = "chords.musicxml";
+    std::vector<Part> mxml = parseXml(mfn);
+    // std::cout << "mxml size: " << mxml.size() << std::endl;
+    std::cout << "part measurenum " << mxml[0].measures.size() << std::endl;
+    // std::cout << "part first measure chords " << mxml[0].measures[0].chords.size() << std::endl;
 
-    for(std::string x: mxml) std::cout << x << " ";
-    std::cout << std::endl;
-    // return 0;
 
-
-    int nSampleRate = 44100;
-    int nNumSeconds = (mxml.size()-4)/4;
-    int nNumChannels = 2; 
-    float vol = 1.0f;
-
+    std::unordered_map<std::string, int> config;
+    config["nSampleRate"] = 44100;
+    config["nNumChannels"] = 1;
+    config["volume"] = 1;
 
     char* fn = getFileName();
-    // int32_t *audioData = generateSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels should be 1
-    // int32_t *audioData = generateStereoSawWave(nSampleRate, nNumSeconds, nNumChannels); //numchannels must be 2
-    // float *audioData = generateMultiSineWave(nSampleRate, nNumSeconds, nNumChannels, 4, vol); 
-    std::pair<int, float*> stuff = mxmlFactory(mxml, nSampleRate, nNumChannels);
+    std::pair<int, float*> stuff = mxmlFactory(mxml, config);
     int nNumSamples = stuff.first;
 
     bool success = WriteWaveFile<int32_t>(
         fn,
         stuff.second, 
-        static_cast<int32_t>(nNumSamples), 
-        static_cast<int16_t>(nNumChannels), 
-        static_cast<int32_t>(nSampleRate)
+        static_cast<int32_t>(config["nNumSamples"]), 
+        static_cast<int16_t>(config["nNumChannels"]), 
+        static_cast<int32_t>(config["nSampleRate"])
     );
 
     if (success) {

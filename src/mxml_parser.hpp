@@ -2,22 +2,20 @@
 #define MXML
 
 #include <libxml/tree.h>
-#include <vector>
-#include <string>
 
-struct MeasureAttribute{
+#include <string>
+#include <vector>
+
+struct MeasureAttribute {
     int beats;
     int beatType;
     int divisions;
 };
 
-
-
 struct Chord {
     std::vector<std::pair<int, std::string>> octNotes;
-    std::string duration;
+    int duration;
 };
-
 
 struct Measure {
     int measurePos;
@@ -30,9 +28,6 @@ struct Part {
     std::vector<Measure> measures;
 };
 
-
-std::vector<std::string> parseXml(const std::string& pfn);
-
-
-
+std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList);
+std::vector<Part> parseXml(const std::string& pfn);
 #endif
