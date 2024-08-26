@@ -227,7 +227,7 @@ std::vector<Part> parseXml(const std::string& pfn){
     xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
 
-    std::string mfn = "./res/tests/" + pfn + ".musicxml";
+    std::string mfn = "./res/mxml/tests/" + pfn + ".musicxml";
     const char* fn = mfn.c_str();
 
     doc = xmlReadFile(fn, NULL, 0);

@@ -346,21 +346,19 @@ float* mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>
             for(Chord& currChord: currMeasure.chords){
                 int chordStart = measurePlace;
                 int chordEnd = measurePlace + (currChord.duration*baseNoteLength); // how far to step
-                int duration = currChord.duration;
                 
+                //get fFreq
+                //TODO - should be done earlier and easier in parser
                 std::vector<float> chordFreq {};
                 for(std::pair<int, std::string>& currNote: currChord.octNotes){
                     chordFreq.push_back(getFreq(currNote.first, keyMap[currNote.second]));
                 }
-                std::cout << "cS cE " << chordStart << " " << chordEnd << std::endl;
 
-                float t;
-                float fPhase = 0;
-                for(int i=chordStart; i < chordEnd; ++i){
-                    t = static_cast<float>(i)/config["nSampleRate"];
+                int crossfade = std::min(100, (chordEnd-chordStart)/2);
+                for(int i=chordStart; i <= chordEnd; ++i){
+                    float t = static_cast<float>(i)/config["nSampleRate"];
                     float norm = 1.0f/partWeight[i];
                     for (float& currNote: chordFreq){
-                        // audioData[i] += advanceOscillator_Sine(fPhase, currNote, nSampleRate); //still clips but recog
                         audioData[i] += norm*std::sin(2*M_PI*currNote*t); //Still clips but passable
                     }
 

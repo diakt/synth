@@ -21,6 +21,7 @@ int main() {
     //Gen float array
     float* audioData = mxmlFactory(mxml, config);
 
+
     //Define and write to fn
     char* outputFile = getFileName(inputMxml);
     bool success = WriteWaveFile<int32_t>(
