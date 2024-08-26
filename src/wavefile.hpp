@@ -6,8 +6,9 @@
 
 #include <vector>
 #include <unordered_map>
+#include <string>
 
-char* getFileName();
+char* getFileName(std::string& fn);
 
 struct SMinimalWaveFileHeader {
     unsigned char m_szChunkID[4];
