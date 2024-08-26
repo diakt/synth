@@ -59,6 +59,7 @@ MeasureAttribute measureAttributeParser(xmlNode* attribNode){
 std::pair<bool, Chord> chordParser(xmlNode* chordNode){
     bool isChord;
     Chord thisChord;
+    int alter = 0;
 
     if(chordNode){
         const unsigned char* chordPhrases[] =  {
@@ -67,6 +68,7 @@ std::pair<bool, Chord> chordParser(xmlNode* chordNode){
             USTR("step"), 
             USTR("duration"),
             USTR("chord"),
+            USTR("alter")
         };
 
         xmlNode* sent = chordNode->children;
@@ -88,8 +90,18 @@ std::pair<bool, Chord> chordParser(xmlNode* chordNode){
                 thisChord.duration = xmlStrContToInt(sent);
             } else if(xmlStrcmp(sent->name, chordPhrases[4])==0){ //chord flag
                 isChord = true;
+            } else if(xmlStrcmp(sent->name, chordPhrases[5])==0){ //alter flag
+                alter = xmlStrContToInt(sent); //if -1, flat
+
             }
             sent = sent->next;
+        }
+        if (alter!=0){
+            if (alter==-1){
+                currNote.second+="b";
+            } else {
+                currNote.second+="#";
+            }
         }
         thisChord.octNotes.push_back(currNote);
     }
