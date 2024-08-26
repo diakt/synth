@@ -1,15 +1,20 @@
 # MusicXML to WAV Converter
 
-Main function is conversion of MusicXML files to WAV audio files. The DSP side was fairly straightforward, then wanted to plug in sheet music using CV and things spiralled into electronic representation instead.
+Conversion of MusicXML files (sheet music) to WAV audio files. The DSP audio generation side was fairly straightforward, but then wanted to plug in sheet music using CV (essentially OMR), and things spiralled rapidly.
 
 Examples can be found in output/mxml for most recent work. I've saved more than a few at this point.
-A lot to do: Parser is naive and can't handle player aliases, arpeggiation, clef variations yet. On audio side, need to implement enveloping and attack timing.
+A lot to do: Parser is naive and can't handle player aliases, arpeggiation, clef variations yet. On audio side, need to implement enveloping and attack timing. Trying to avoid prebuilt synths.
+
+In the longer term, I'm going to end up with functionality similar to [this paper](https://firebasestorage.googleapis.com/v0/b/afika-nyati-website.appspot.com/o/design%2Fcadencv%2Fcadencv_afika_nyati.pdf?alt=media&token=a5aa2413-32c0-4bc7-8222-06342b822096), but not my immediate interest right now.
 
 
 # TODO:
+0) Rfx almost everything
 1) Handle note transfer popping, straightforward post enveloping
-7) Define facilities for bpm conversion to sampling rate, C4 to current working, 
+7) Define facilities for bpm conversion to sampling rate.
+8) Add writes for non-wav (mp4, OPUS)
 9) Find any mxml from Bach WTC
+10) OpenCV linking
 
 ## Features
 
@@ -34,6 +39,6 @@ A lot to do: Parser is naive and can't handle player aliases, arpeggiation, clef
 ## Usage
 
 1. Place your MusicXML file in the `./res/mxml/tests/` directory (or don't, I would recommend anything already there).
-2. Update the `inputMxml` variable in `main.cpp` with your filename (without extension)
+2. Update the `inputMxml` variable in `main.cpp` with your filename (sans extension)
 3. Compile and run the program
 4. The output WAV file will be generated in the `output/` directory
