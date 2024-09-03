@@ -15,7 +15,7 @@ struct MeasureAttribute {
 struct Chord {
     std::vector<std::pair<int, std::string>> octNotes;
     int duration;
-};
+}; 
 
 struct Measure {
     int measurePos;

@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -I/opt/homebrew/include/libxml2
+CXXFLAGS = -std=c++17 -I/opt/homebrew/include/libxml2
 LDFLAGS = -L/opt/homebrew/lib -lxml2
 
 SRC_DIR = ./src
