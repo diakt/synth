@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#define USTR(x)(const unsigned char*)(x)
+#define USTR(x) (const unsigned char*)(x)
 
 //////////////////////////////////////////
 ////// xml harvest utils /////////////////
@@ -28,11 +28,11 @@ std::string xmlStrContToStr(xmlNode* node) {
     return temp;
 }
 
-int xmlStrPropToInt(xmlNode* node, const unsigned char* arg){
+int xmlStrPropToInt(xmlNode* node, const unsigned char* arg) {
     int res;
     xmlChar* propVal = xmlGetProp(node, arg);
-    if (propVal){
-        size_t propL= xmlStrlen(propVal);
+    if (propVal) {
+        size_t propL = xmlStrlen(propVal);
         std::string temp(reinterpret_cast<const char*>(propVal), propL);
         res = std::stoi(temp);
     } else {
@@ -41,19 +41,19 @@ int xmlStrPropToInt(xmlNode* node, const unsigned char* arg){
     return res;
 }
 
-std::string xmlStrPropToStr(xmlNode* node, const unsigned char* arg){
+std::string xmlStrPropToStr(xmlNode* node, const unsigned char* arg) {
     std::string res;
     xmlChar* propVal = xmlGetProp(node, arg);
-    if (propVal){
-        size_t propL= xmlStrlen(propVal);
+    if (propVal) {
+        size_t propL = xmlStrlen(propVal);
         std::string temp(reinterpret_cast<const char*>(propVal), propL);
         return temp;
-    } 
+    }
     return "Unknown";
 }
 
 std::shared_ptr<xmlNode> makeXmlNodeShared(xmlNode* node) {
-    return std::shared_ptr<xmlNode>(node, [](xmlNode*){});
+    return std::shared_ptr<xmlNode>(node, [](xmlNode*) {});
 }
 
 //////////////////////////////////////////
@@ -64,26 +64,23 @@ MeasureAttribute measureAttributeParser(xmlNode* attribNode) {
     MeasureAttribute thisAttribute;
 
     if (attribNode) {
-
         static const std::array<const unsigned char*, 4> attribPhrases = {
             USTR("divisions"),
             USTR("time"),
             USTR("beats"),
-            USTR("beat-type")
-            };
+            USTR("beat-type")};
 
-        for(auto child = makeXmlNodeShared(attribNode->children); child; child = makeXmlNodeShared(child->next)){
+        for (auto child = makeXmlNodeShared(attribNode->children); child; child = makeXmlNodeShared(child->next)) {
             if (xmlStrcmp(child.get()->name, attribPhrases[0]) == 0) {  // divisions
                 thisAttribute.divisions = xmlStrContToInt(child.get());
             } else if (xmlStrcmp(child.get()->name, attribPhrases[1]) == 0) {  // time
-                xmlNode* temp = child.get()->children;
-                while (temp) {
-                    if (xmlStrcmp(temp->name, attribPhrases[2]) == 0) {
-                        thisAttribute.beats = xmlStrContToInt(temp);
-                    } else if (xmlStrcmp(temp->name, attribPhrases[3]) == 0) {
-                        thisAttribute.beatType = xmlStrContToInt(temp);
+
+                for (auto subChild = makeXmlNodeShared(child.get()->children); subChild; subChild = makeXmlNodeShared(subChild->next)) {
+                    if (xmlStrcmp(subChild->name, attribPhrases[2]) == 0) {
+                        thisAttribute.beats = xmlStrContToInt(subChild.get());
+                    } else if (xmlStrcmp(subChild->name, attribPhrases[3]) == 0) {
+                        thisAttribute.beatType = xmlStrContToInt(subChild.get());
                     }
-                    temp = temp->next;
                 }
             }
         }
@@ -106,9 +103,9 @@ std::pair<bool, Chord> chordParser(xmlNode* chordNode) {
             USTR("alter")};
 
         std::pair<int, std::string> currNote;
-        for(auto child = makeXmlNodeShared(chordNode->children); child; child = makeXmlNodeShared(child.get()->next)){
+        for (auto child = makeXmlNodeShared(chordNode->children); child; child = makeXmlNodeShared(child.get()->next)) {
             if (xmlStrcmp(child.get()->name, chordPhrases[0]) == 0) {  // pitch
-                for(auto subChild = makeXmlNodeShared(child.get()->children); subChild; subChild=makeXmlNodeShared(subChild->next)){
+                for (auto subChild = makeXmlNodeShared(child.get()->children); subChild; subChild = makeXmlNodeShared(subChild->next)) {
                     if (xmlStrcmp(subChild.get()->name, chordPhrases[1]) == 0) {  // octave
                         currNote.first = xmlStrContToInt(subChild.get());
                     } else if (xmlStrcmp(subChild.get()->name, chordPhrases[2]) == 0) {  // step
@@ -124,7 +121,7 @@ std::pair<bool, Chord> chordParser(xmlNode* chordNode) {
             }
         }
 
-        
+        // TODO - Handling alters more gracefully
         if (alter != 0) {
             if (alter == -1) {
                 currNote.second += "b";
@@ -147,12 +144,12 @@ Measure measureParser(xmlNode* measureNode) {
             USTR("note"),
         };
 
-        thisMeasure.measurePos = xmlStrPropToInt(measureNode, measurePhrases[0]); //number
+        thisMeasure.measurePos = xmlStrPropToInt(measureNode, measurePhrases[0]);  // number
 
         bool chordFlag = 0;
         std::pair<bool, Chord> ret;
 
-        for(auto child = makeXmlNodeShared(measureNode->children);child;child = makeXmlNodeShared(child->next)){
+        for (auto child = makeXmlNodeShared(measureNode->children); child; child = makeXmlNodeShared(child->next)) {
             if (xmlStrcmp(child->name, measurePhrases[1]) == 0) {  // attributes
                 thisMeasure.attributes = measureAttributeParser(child.get());
 
@@ -166,33 +163,30 @@ Measure measureParser(xmlNode* measureNode) {
                     } else {  // indicated chord
                         thisMeasure.chords[thisMeasure.chords.size() - 1].octNotes.push_back(ret.second.octNotes[0]);
                     }
-
                 } else {
-                    thisMeasure.chords.push_back(ret.second);
                     chordFlag = 0;
+                    thisMeasure.chords.push_back(ret.second);
                 }
             }
         }
     }
-    
+
     return thisMeasure;
 }
 
 Part partParser(xmlNode* partNode) {
-    // get the part from the node content. That is the key to the val
     Part thisPart;
 
-    static const std::array<const unsigned char*, 2> partPhrases = {
-        USTR("id"),
-        USTR("measure"),
-    };
-
     if (partNode) {
+        static const std::array<const unsigned char*, 2> partPhrases = {
+            USTR("id"),
+            USTR("measure"),
+        };
         thisPart.partName = xmlStrPropToStr(partNode, partPhrases[0]);
-        
-        for(auto child = std::shared_ptr<xmlNode>(partNode->children, [](xmlNode*) {}); child; child = std::shared_ptr<xmlNode>(child->next, [](xmlNode*) {})){
-            if (child->type != XML_TEXT_NODE) { 
-                if (xmlStrcmp(child->name, partPhrases[1]) == 0) {  
+
+        for (auto child = std::shared_ptr<xmlNode>(partNode->children, [](xmlNode*) {}); child; child = std::shared_ptr<xmlNode>(child->next, [](xmlNode*) {})) {
+            if (child->type != XML_TEXT_NODE) {
+                if (xmlStrcmp(child->name, partPhrases[1]) == 0) {
                     thisPart.measures.push_back(measureParser(child.get()));
                 }
             }
@@ -224,15 +218,13 @@ std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList) {
 //////////// section entry ///////////////
 //////////////////////////////////////////
 
-
 std::vector<Part> parseXml(const std::string& pfn) {
     std::vector<Part> res;
     const std::string mfn = "./res/mxml/tests/" + pfn + ".musicxml";
 
     std::unique_ptr<xmlDoc, decltype(&xmlFreeDoc)> docPtr(
-        xmlReadFile(mfn.c_str(), nullptr, 0), //2part spec file encoding
-        xmlFreeDoc
-    );
+        xmlReadFile(mfn.c_str(), nullptr, 0),  // 2part spec file encoding
+        xmlFreeDoc);
 
     if (!docPtr) {
         std::cerr << "Error: could not parse file" << std::endl;
