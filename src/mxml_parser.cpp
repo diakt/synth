@@ -10,7 +10,6 @@
 
 #define USTR(x)(const unsigned char*)(x)
 
-
 //////////////////////////////////////////
 ////// xml harvest utils /////////////////
 //////////////////////////////////////////
@@ -106,7 +105,6 @@ std::pair<bool, Chord> chordParser(xmlNode* chordNode) {
             USTR("chord"),
             USTR("alter")};
 
-        xmlNode* sent = chordNode->children;
         std::pair<int, std::string> currNote;
         for(auto child = makeXmlNodeShared(chordNode->children); child; child = makeXmlNodeShared(child.get()->next)){
             if (xmlStrcmp(child.get()->name, chordPhrases[0]) == 0) {  // pitch
@@ -149,7 +147,7 @@ Measure measureParser(xmlNode* measureNode) {
             USTR("note"),
         };
 
-        thisMeasure.measurePos = xmlStrPropToInt(measureNode, measurePhrases[0]);
+        thisMeasure.measurePos = xmlStrPropToInt(measureNode, measurePhrases[0]); //number
 
         bool chordFlag = 0;
         std::pair<bool, Chord> ret;
@@ -160,7 +158,6 @@ Measure measureParser(xmlNode* measureNode) {
 
             } else if (xmlStrcmp(child.get()->name, measurePhrases[2]) == 0) {  // note
                 ret = chordParser(child.get());
-                // std::cout << "chordParser called and prod " << ret.second.octNotes.size() << " " << ret.second.duration << std::endl;
 
                 if (ret.first) {       // indicates chord found
                     if (!chordFlag) {  // no current chord, so new elt to chords
@@ -233,7 +230,7 @@ std::vector<Part> parseXml(const std::string& pfn) {
     const std::string mfn = "./res/mxml/tests/" + pfn + ".musicxml";
 
     std::unique_ptr<xmlDoc, decltype(&xmlFreeDoc)> docPtr(
-        xmlReadFile(mfn.c_str(), nullptr, 0),
+        xmlReadFile(mfn.c_str(), nullptr, 0), //2part spec file encoding
         xmlFreeDoc
     );
 
