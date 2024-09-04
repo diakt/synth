@@ -16,6 +16,7 @@ int main() {
         {"nSampleRate", 44100},
         {"nNumChannels", 1},
         {"volume", 1},
+    
     };
 
     //Gen float array

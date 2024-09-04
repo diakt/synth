@@ -1,4 +1,4 @@
-# MusicXML to WAV Converter
+# MusicXML to WAV Converter (currently rfx)
 
 Conversion of MusicXML files (sheet music) to WAV audio files. The DSP audio generation side was fairly straightforward, but then wanted to plug in sheet music using CV (essentially OMR), and things spiralled rapidly.
 
