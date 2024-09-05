@@ -8,20 +8,23 @@
 
 int main() {
 
-    //Scoreparsing from musicxml
-    std::string inputMxml = "chords";
-    std::vector<Part> mxml = parseXml(inputMxml);
+    //Config for file generation
+    std::unordered_map<std::string, std::string> inputConfig {
+        {"inputFile", "chords"},
+    };
 
     //Config for file generation
-    std::unordered_map<std::string, int> config {
+    std::unordered_map<std::string, int> outputConfig {
         {"nSampleRate", 44100},
         {"nNumChannels", 1},
         {"volume", 1},
-    
     };
 
+    //Scoreparsing from musicxml
+    std::vector<Part> mxml = parseXml(inputConfig["inputFile"]);
+
     AudioProcessor audioProcessor;
-    audioProcessor.setConfig(config);
+    audioProcessor.setConfig(outputConfig);
     float* audioData = audioProcessor.genFloat(mxml);
 
     //Gen float array
@@ -29,7 +32,7 @@ int main() {
 
 
     //Define and write to fn
-    std::string outputFile = audioProcessor.genFileName(inputMxml);
+    std::string outputFile = audioProcessor.genFileName(inputConfig["inputFile"]);
     bool success = audioProcessor.WriteWaveFile<int32_t>(
         outputFile.c_str(),
         audioData, 

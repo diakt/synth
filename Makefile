@@ -5,7 +5,7 @@ LDFLAGS = -L/opt/homebrew/lib -lxml2
 SRC_DIR = ./src
 BUILD_DIR = ./build
 
-SRCS = $(SRC_DIR)/mxml_parser.cpp $(SRC_DIR)/main.cpp $(SRC_DIR)/rfxwavefile.cpp #$(SRC_DIR)/wavefile.cpp
+SRCS = $(SRC_DIR)/mxml_parser.cpp $(SRC_DIR)/main.cpp $(SRC_DIR)/wavefile.cpp
 OBJS = $(patsubst $(SRC_DIR)%.cpp, $(BUILD_DIR)/%.o, $(SRCS))
 TARGET = $(BUILD_DIR)/main
 

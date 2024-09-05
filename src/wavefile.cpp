@@ -69,17 +69,6 @@ AudioProcessor::AudioProcessor(std::unordered_map<std::string, int> config) : co
 }
 
 
-void AudioProcessor::setSampleRate(int newSampleRate) {
-    sampleRate = newSampleRate;
-}
-
-void AudioProcessor::setNumChannels(int newNumChannels) {
-    numChannels = newNumChannels;
-}
-
-void AudioProcessor::setVolume(int newVolume) {
-    volume = newVolume;
-}
 
 void AudioProcessor::setConfig(std::unordered_map<std::string, int> newConfig){
     config = newConfig;
