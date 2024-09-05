@@ -1,9 +1,10 @@
-#include "wavefile.hpp"
-#include "mxml_parser.hpp"
+// #include "wavefile.hpp"
 #include <iostream>
 #include <chrono>
 #include <string>
 #include <unordered_map>
+#include "mxml_parser.hpp"
+#include "wavefile.hpp"
 
 int main() {
 
@@ -19,18 +20,22 @@ int main() {
     
     };
 
+    AudioProcessor audioProcessor;
+    audioProcessor.setConfig(config);
+    float* audioData = audioProcessor.genFloat(mxml);
+
     //Gen float array
-    float* audioData = mxmlFactory(mxml, config);
+    // float* audioData = mxmlFactory(mxml, config);
 
 
     //Define and write to fn
-    char* outputFile = getFileName(inputMxml);
-    bool success = WriteWaveFile<int32_t>(
-        outputFile,
+    std::string outputFile = audioProcessor.genFileName(inputMxml);
+    bool success = audioProcessor.WriteWaveFile<int32_t>(
+        outputFile.c_str(),
         audioData, 
-        static_cast<int32_t>(config["nNumSamples"]),  //note nNumSamples is added  in mxmlFac
-        static_cast<int16_t>(config["nNumChannels"]), 
-        static_cast<int32_t>(config["nSampleRate"])
+        static_cast<int32_t>(audioProcessor.config["nNumSamples"]),  //note nNumSamples is added  in mxmlFac
+        static_cast<int16_t>(audioProcessor.config["nNumChannels"]), 
+        static_cast<int32_t>(audioProcessor.config["nSampleRate"])
     );
 
     if (!success) {

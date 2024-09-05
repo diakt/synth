@@ -1,4 +1,4 @@
-#include "wavefile.hpp"
+// #include "wavefile.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -10,255 +10,115 @@
 #include <type_traits>
 #include <typeinfo>
 #include <unordered_map>
+#include <sstream>
 
 #include "mxml_parser.hpp"
+#include "wavefile.hpp"
 
-// ENUM
+//////////////////////////////
+//////////////////////////////
+//////////////////////////////
+//////////////////////////////
+//////////////////////////////
 
-std::unordered_map<std::string, int> keyMap = {
-    {"A", 0},
-    {"A#", 1},
-    {"Bb", 1},
-    {"B", 2},
-    {"C", 3},
-    {"C#", 4},
-    {"Db", 4},
-    {"D", 5},
-    {"D#", 6},
-    {"Eb", 6},
-    {"E", 7},
-    {"F", 8},
-    {"F#", 9},
-    {"Gb", 9},
-    {"G", 10},
-    {"G#", 11},
-    {"Ab", 11},
-};
+AudioProcessor::AudioProcessor() {
+    keyMap = {
+        {"A", 0},
+        {"A#", 1},
+        {"Bb", 1},
+        {"B", 2},
+        {"C", 3},
+        {"C#", 4},
+        {"Db", 4},
+        {"D", 5},
+        {"D#", 6},
+        {"Eb", 6},
+        {"E", 7},
+        {"F", 8},
+        {"F#", 9},
+        {"Gb", 9},
+        {"G", 10},
+        {"G#", 11},
+        {"Ab", 11},
+    };
+}
 
-// FILE UTILS
+AudioProcessor::~AudioProcessor(){};
 
-char* getFileName(std::string& fn) {
+
+AudioProcessor::AudioProcessor(std::unordered_map<std::string, int> config) : config(config) {
+    keyMap = {
+        {"A", 0},
+        {"A#", 1},
+        {"Bb", 1},
+        {"B", 2},
+        {"C", 3},
+        {"C#", 4},
+        {"Db", 4},
+        {"D", 5},
+        {"D#", 6},
+        {"Eb", 6},
+        {"E", 7},
+        {"F", 8},
+        {"F#", 9},
+        {"Gb", 9},
+        {"G", 10},
+        {"G#", 11},
+        {"Ab", 11},
+    };
+}
+
+
+void AudioProcessor::setSampleRate(int newSampleRate) {
+    sampleRate = newSampleRate;
+}
+
+void AudioProcessor::setNumChannels(int newNumChannels) {
+    numChannels = newNumChannels;
+}
+
+void AudioProcessor::setVolume(int newVolume) {
+    volume = newVolume;
+}
+
+void AudioProcessor::setConfig(std::unordered_map<std::string, int> newConfig){
+    config = newConfig;
+}
+
+void AudioProcessor::setInputOutput(std::string input){
     auto now = std::chrono::system_clock::now();
     long now_c = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << "output/" << input << "_" << now_c << ".wav";
 
-    std::string str = std::to_string(now_c);
-    char* char_arr = new char[str.length() + 1];
-    std::strcpy(char_arr, str.c_str());
-
-    const char* base = "output/";
-    const char* sigh = "_";
-    const char* end = ".wav";
-
-    char* res = new char[strlen(base) + strlen(fn.c_str()) + strlen(sigh) + strlen(char_arr) + strlen(end)];
-    std::strcpy(res, base);
-    std::strcat(res, fn.c_str());
-    std::strcat(res, sigh);
-    std::strcat(res, char_arr);
-    std::strcat(res, end);
-
-    delete[] char_arr;
-
-    return res;
+    inputOutput.first = "./res/mxml/tests"+input+".musicxml";
+    inputOutput.second = ss.str();
 }
 
-// CLAMP MACRO
-#define CLAMP(value, min, max)    \
-    {                             \
-        if (value < min) {        \
-            value = min;          \
-        } else if (value > max) { \
-            value = max;          \
-        }                         \
-    };
-
-// TYPE UTILS
-
-// Overload for uint8_t
-void convFromFloat(float fIn, uint8_t& tOut) {
-    fIn = (fIn + 1.0f) * 127.5f;
-    fIn = std::min(255.0f, std::max(0.0f, fIn));
-    tOut = static_cast<uint8_t>(fIn);
-}
-
-// Overload for int16_t
-void convFromFloat(float fIn, int16_t& tOut) {
-    fIn *= 32767.0f;
-    fIn = std::min(32767.0f, std::max(-32768.0f, fIn));
-    tOut = static_cast<int16_t>(fIn);
-}
-
-// Overload for int32_t
-void convFromFloat(float fIn, int32_t& tOut) {
-    double dIn = static_cast<double>(fIn) * 2147483647.0;
-    dIn = std::min(2147483647.0, std::max(-2147483648.0, dIn));
-    tOut = static_cast<int32_t>(dIn);
-}
-
-// SOUND UTILS
-float getFreq(int octave, int note) {
-    // base is 4 on 0
+float AudioProcessor::getFreq(int octave, int note){
     return (float)(440 * pow(2.0, ((double)((octave - 4) * 12 + note)) / 12.0));
 }
 
-// OSCILLATORS
-float advanceOscillator_Sine(float& fPhase, float fFrequency, float fSampleRate) {
-    fPhase += 2 * (float)M_PI * fFrequency / (float)fSampleRate;
+std::string AudioProcessor::genFileName(std::string& fn) {
+    auto now = std::chrono::system_clock::now();
+    long now_c = std::chrono::system_clock::to_time_t(now);
 
-    while (fPhase >= 2 * (float)M_PI) {
-        fPhase -= 2 * (float)M_PI;
-    }
-    while (fPhase < 0) {
-        fPhase += 2 * (float)M_PI;
-    }
-    return sin(fPhase);
+    std::stringstream ss;
+    ss << "output/" << fn << "_" << now_c << ".wav";
+    return ss.str();
 }
 
-float advanceOscillator_Square(float& fPhase, float fFrequency, float fSampleRate) {
-    fPhase += fFrequency / fSampleRate;
-
-    while (fPhase > 1.0f)
-        fPhase -= 1.0f;
-    while (fPhase < 0.0f)
-        fPhase += 1.0f;
-
-    return (fPhase <= 0.5f) ? -1.0f : 1.0f;
-}
-
-float advanceOscillator_Saw(float& fPhase, float fFrequency, float fSampleRate) {
-    fPhase += fFrequency / fSampleRate;
-
-    while (fPhase > 1.0f)
-        fPhase -= 1.0f;
-    while (fPhase < 0.0f)
-        fPhase += 1.0f;
-    return (fPhase * 2.0f) - 1.0f;
-}
-
-float advanceOscillator_Triangle(float& fPhase, float fFrequency, float fSampleRate) {
-    fPhase += fFrequency / fSampleRate;
-
-    while (fPhase > 1.0f)
-        fPhase -= 1.0f;
-    while (fPhase < 0.0f)
-        fPhase += 1.0f;
-
-    float fRet = (fPhase <= 0.5f) ? fPhase * 2 : (fRet * 2.0f) - 1.0f;
-
-    return (fPhase * 2.0f) - 1.0f;
-}
-
-float advanceOscillator_Noise(float& fPhase, float fFrequency, float fSampleRate,
-                              float fLastValue) {
-    // last arg dud to preserve
-    unsigned int nLastSeed = (unsigned int)fPhase;
-    fPhase += fFrequency / fSampleRate;
-    unsigned int nSeed = (unsigned int)fPhase;
-
-    while (fPhase > 2.0f) {
-        fPhase -= 1.0f;
-    }
-    if (nSeed != nLastSeed) {
-        float fValue = ((float)rand()) / ((float)RAND_MAX);
-        fValue = (fValue * 2.0f) - 1.0f;
-        fValue = (fValue < 0) ? -1.0f : 1.0f;  // inc intensity
-        return fValue;
-    } else {
-        return fLastValue;
-    }
-}
-
-// GENERATE WAVEFORMS
-
-int32_t* generateSawWave(int nSampleRate, int nNumSeconds, int nNumChannels) {
-    // TODO - Doubling length of expected saw wave sample due to type mismatch
-    int nNumSamples = nSampleRate * nNumChannels * nNumSeconds;
-    int32_t* audioData = new int32_t[nNumSamples];
-
-    int32_t nValue = 0;
-    for (int nIndex = 0; nIndex < nNumSamples; ++nIndex) {
-        nValue += 8000000;
-        audioData[nIndex] = nValue;
-    }
-
-    return audioData;
-}
-
-int32_t* generateStereoSawWave(int nSampleRate, int nNumSeconds, int nNumChannels) {
-    // TODO - Doubling length of expected saw wave sample due to type mismatch
-    int nNumSamples = nSampleRate * nNumChannels * nNumSeconds;
-    int32_t* audioData = new int32_t[nNumSamples];
-
-    int32_t nValue1 = 0;
-    int32_t nValue2 = 0;
-    for (int nIndex = 0; nIndex < nNumSamples; nIndex += 2) {
-        nValue1 += 8000000;
-        nValue2 += 12000000;
-        audioData[nIndex] = nValue1;      // left channel
-        audioData[nIndex + 1] = nValue2;  // right channel
-    }
-
-    return audioData;
-}
-
-float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, float vol) {
-    // vol is problem child to the extremes, but res by shift to hpp
-
-    int nNumSamples = nSampleRate * nNumSeconds * nNumChannels;
-    float* audioData = new float[nNumSamples];
-
-    float testFreq1 = getFreq(3, 0);
-    float testFreq2 = getFreq(3, 3);
-    int transfer = nNumSamples / 2;
-
-    float fPhase = 0;
-    float lastVal = 0.0f;
-    for (int i = 0; i < nNumSamples; ++i) {
-        if (i < transfer) {
-            audioData[i] = vol * advanceOscillator_Sine(fPhase, testFreq1, nSampleRate);
-        } else {
-            audioData[i] = vol * advanceOscillator_Sine(fPhase, testFreq2, nSampleRate);
-        }
-        lastVal = audioData[i];
-    }
-    return audioData;
-}
-
-float* generateMultiSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, int nNotes, float vol) {
-    int nNumSamples = nSampleRate * nNumSeconds * nNumChannels;
-    float* audioData = new float[nNumSamples];
-
-    std::vector<float> frequencies = {
-        getFreq(3, 0),
-        getFreq(3, 3),
-        getFreq(3, 7),
-        getFreq(3, 10)};
-
-    float t;
-    float norm = 1.0f / nNotes;
-
-    for (int i = 0; i < nNumSamples; ++i) {
-        t = static_cast<float>(i) / nSampleRate;
-        float sample = 0;
-        for (float x : frequencies) {
-            audioData[i] += norm * std::sin(2 * M_PI * x * t);
-        }
-    }
-    return audioData;
-}
-
-int maxMeasure(std::vector<Part>& mxml) {
-    // what is the highest measure? e.g. 64 bars
+int AudioProcessor::maxMeasure(std::vector<Part>& mxml){
     int maxM = 0;
-    for (Part& x : mxml) {
-        for (Measure& y : x.measures) {  // could just take -1
-            // std::cout << "maxMeasure measurePos val " << y.measurePos << std::endl;
+    for (Part& x : mxml){
+        for (Measure& y: x.measures){
             maxM = std::max(maxM, y.measurePos);
         }
     }
     return maxM;
 }
 
-std::unordered_map<int, int> getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config) {
+std::unordered_map<int,int> AudioProcessor::getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config) {
     // calculate relevant weightings of notes (more means cut amplitude to avoid clipping)
     std::unordered_map<int, int> partWeight{{0, 0}};
     int currMeasurePos;
@@ -288,11 +148,11 @@ std::unordered_map<int, int> getWeights(std::vector<Part>& mxml, std::unordered_
             }
         }
     }
-    std::cout << "end partWeight \n\n" << std::endl;
+    std::cout << "end partWeight \n\n"<< std::endl;
     return partWeight;
 }
 
-float* mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config) {
+float* AudioProcessor::genFloat(std::vector<Part>& mxml){
     // additional params
     int measureCount = maxMeasure(mxml);
     std::unordered_map<int, int> partWeight = getWeights(mxml, config);
@@ -310,9 +170,7 @@ float* mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>
     float lastval = 1.0f;
 
     for (Part& currPart : mxml) {
-        // std::cout << "mxmlFactory-currPart: " << currPart.partName << std::endl;
         for (Measure& currMeasure : currPart.measures) {
-            // std::cout << "mxmlFactory-currMeasure: " << currMeasure.measurePos << std::endl;
             currMeasurePos = (currMeasure.measurePos - 1) * config["nSampleRate"];                                     // mxml is 1-indexed
             baseNoteLength = config["nSampleRate"] * currMeasure.attributes.divisions / currMeasure.attributes.beats;  // if 4, on
 
@@ -321,8 +179,6 @@ float* mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>
                 int chordStart = measurePlace;
                 int chordEnd = measurePlace + (currChord.duration * baseNoteLength);  // how far to step
 
-                // get fFreq
-                // TODO - should be done earlier and easier in parser
                 std::vector<float> chordFreq{};
                 for (std::pair<int, std::string>& currNote : currChord.octNotes) {
                     chordFreq.push_back(getFreq(currNote.first, keyMap[currNote.second]));
@@ -342,57 +198,57 @@ float* mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>
     }
 
     return audioData;
+
 }
 
-class AudioProcessor {
-   private:
-    std::unordered_map<std::string, int> keyMap;
-    int sampleRate;
-    int numChannels;
-    float volume;
-
-    float getFreq() { return 3.0f; }
-
-   public:
-    AudioProcessor();
-    ~AudioProcessor();
-    void setSampleRate(int newSampleRate);
-    void setNumChannels(int newNumChannels);
-    void setVolume(int newVolume);
-};
-
-AudioProcessor::AudioProcessor() {
-    keyMap = {
-        {"A", 0},
-        {"A#", 1},
-        {"Bb", 1},
-        {"B", 2},
-        {"C", 3},
-        {"C#", 4},
-        {"Db", 4},
-        {"D", 5},
-        {"D#", 6},
-        {"Eb", 6},
-        {"E", 7},
-        {"F", 8},
-        {"F#", 9},
-        {"Gb", 9},
-        {"G", 10},
-        {"G#", 11},
-        {"Ab", 11},
-    };
+void AudioProcessor::convFromFloat(float fIn, int32_t& tOut){
+    double dIn = static_cast<double>(fIn) * 2147483647.0;
+    dIn = std::min(2147483647.0, std::max(-2147483648.0, dIn));
+    tOut = static_cast<int32_t>(dIn);
 }
 
-AudioProcessor::~AudioProcessor(){};
+template <typename T>
+bool AudioProcessor::WriteWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate) {
+    
+    
+    FILE* File = fopen(szFileName, "w+b");
+    if (!File) {
+        return false;
+    }
+    int32_t nBitsPerSample = sizeof(T) * 8;
+    int nDataSize = nNumSamples * sizeof(T);
 
-void AudioProcessor::setSampleRate(int newSampleRate) {
-    sampleRate = newSampleRate;
+    SMinimalWaveFileHeader waveHeader;
+
+    memcpy(waveHeader.m_szChunkID, "RIFF", 4);
+    waveHeader.m_nChunkSize = nDataSize + 36;
+    memcpy(waveHeader.m_szFormat, "WAVE", 4);
+
+    memcpy(waveHeader.m_szSubChunk1ID, "fmt ", 4);
+    waveHeader.m_nSubChunk1Size = 16;
+    waveHeader.m_nAudioFormat = 1;
+    waveHeader.m_nNumChannels = nNumChannels;
+    waveHeader.m_nSampleRate = nSampleRate;
+    waveHeader.m_nByteRate = nSampleRate * nNumChannels * nBitsPerSample / 8;
+    waveHeader.m_nBlockAlign = nNumChannels * nBitsPerSample / 8;
+    waveHeader.m_nBitsPerSample = nBitsPerSample;
+
+    memcpy(waveHeader.m_szSubChunk2ID, "data", 4);
+    waveHeader.m_nSubChunk2Size = nDataSize;
+
+    fwrite(&waveHeader, sizeof(SMinimalWaveFileHeader), 1, File);
+
+    // update to write
+    T* pData = new T[nNumSamples];
+    for (int i = 0; i < nNumSamples; ++i) {
+        convFromFloat(floatData[i], pData[i]);
+    }
+
+    fwrite(pData, nDataSize, 1, File);
+    delete[] pData;
+
+    fclose(File);
+    return true;
 }
 
-void AudioProcessor::setNumChannels(int newNumChannels) {
-    numChannels = newNumChannels;
-}
-
-void AudioProcessor::setVolume(int newVolume) {
-    volume = newVolume;
-}
+template bool AudioProcessor::WriteWaveFile<int32_t>(const char*, float*, int32_t, int16_t, int32_t);

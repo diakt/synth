@@ -1,14 +1,11 @@
-#ifndef WAVEFILE_HPP
-#define WAVEFILE_HPP
+#ifndef RFXWAVEFILE
+#define RFXWAVEFILE
+
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include "mxml_parser.hpp"
 
-#include <stdint.h>
-
-#include <vector>
-#include <unordered_map>
-#include <string>
-
-char* getFileName(std::string& fn);
 
 struct SMinimalWaveFileHeader {
     unsigned char m_szChunkID[4];
@@ -26,12 +23,39 @@ struct SMinimalWaveFileHeader {
     uint32_t m_nSubChunk2Size;
 };
 
-// TYPE UTILS
-void convFromFloat(float fIn, uint8_t& tOut);
-void convFromFloat(float fIn, int16_t& tOut);
-void convFromFloat(float fIn, int32_t& tOut);
+class AudioProcessor {
+   private:
+        std::unordered_map<std::string, int> keyMap;
+        int sampleRate;
+        int numChannels;
+        float volume;
+        
 
-// WRITE ARRAY TO FILE
+        float getFreq(int octave, int note);
+
+        int maxMeasure(std::vector<Part>& mxml);
+        std::unordered_map<int,int> getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config);
+        std::pair<std::string, std::string> inputOutput;
+        void convFromFloat(float fIn, int32_t& tOut);
+
+   public:
+        AudioProcessor();
+        AudioProcessor(std::unordered_map<std::string, int> config);
+        ~AudioProcessor();
+        void setSampleRate(int newSampleRate);
+        void setNumChannels(int newNumChannels);
+        void setVolume(int newVolume);
+        void setConfig(std::unordered_map<std::string, int> config);
+        void setInputOutput(std::string baseName);
+        float* genFloat(std::vector<Part>& mxml);
+        std::string genFileName(std::string& fn);
+        std::unordered_map<std::string, int> config;
+        template <typename T>
+        bool WriteWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate);
+};
+
+
+
 template <typename T>
 bool WriteWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate) {
     FILE* File = fopen(szFileName, "w+b");
@@ -74,13 +98,5 @@ bool WriteWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples
     return true;
 }
 
-int32_t* generateSawWave(int nSampleRate, int nNumSeconds, int nNumChannels);
 
-int32_t* generateStereoSawWave(int nSampleRate, int nNumSeconds, int nNumChannels);
-
-float* generateSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, float vol);
-
-float* generateMultiSineWave(int nSampleRate, int nNumSeconds, int nNumChannels, int nNotes, float vol);
-
-float* mxmlFactory(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config);
-#endif  // WAVEFILE_HPP
+#endif
