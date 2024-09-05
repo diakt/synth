@@ -197,7 +197,7 @@ void AudioProcessor::convFromFloat(float fIn, int32_t& tOut){
 }
 
 template <typename T>
-bool AudioProcessor::WriteWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate) {
+bool AudioProcessor::writeWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate) {
     
     
     FILE* File = fopen(szFileName, "w+b");
@@ -240,4 +240,4 @@ bool AudioProcessor::WriteWaveFile(const char* szFileName, float* floatData, int
     return true;
 }
 
-template bool AudioProcessor::WriteWaveFile<int32_t>(const char*, float*, int32_t, int16_t, int32_t);
+template bool AudioProcessor::writeWaveFile<int32_t>(const char*, float*, int32_t, int16_t, int32_t);

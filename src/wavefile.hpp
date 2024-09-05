@@ -43,7 +43,7 @@ class AudioProcessor {
         std::string genFileName(std::string& fn);
         std::unordered_map<std::string, int> config;
         template <typename T>
-        bool WriteWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate);
+        bool writeWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate);
 };
 
 #endif

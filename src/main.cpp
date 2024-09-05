@@ -33,7 +33,7 @@ int main() {
 
     //Define and write to fn
     std::string outputFile = audioProcessor.genFileName(inputConfig["inputFile"]);
-    bool success = audioProcessor.WriteWaveFile<int32_t>(
+    bool success = audioProcessor.writeWaveFile<int32_t>(
         outputFile.c_str(),
         audioData, 
         static_cast<int32_t>(audioProcessor.config["nNumSamples"]),  //note nNumSamples is added  in mxmlFac
