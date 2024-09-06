@@ -22,66 +22,20 @@
 //////////////////////////////
 
 AudioProcessor::AudioProcessor() {
-    keyMap = {
-        {"A", 0},
-        {"A#", 1},
-        {"Bb", 1},
-        {"B", 2},
-        {"C", 3},
-        {"C#", 4},
-        {"Db", 4},
-        {"D", 5},
-        {"D#", 6},
-        {"Eb", 6},
-        {"E", 7},
-        {"F", 8},
-        {"F#", 9},
-        {"Gb", 9},
-        {"G", 10},
-        {"G#", 11},
-        {"Ab", 11},
-    };
 }
 
 AudioProcessor::~AudioProcessor(){};
 
 
 AudioProcessor::AudioProcessor(std::unordered_map<std::string, int> config) : config(config) {
-    keyMap = {
-        {"A", 0},
-        {"A#", 1},
-        {"Bb", 1},
-        {"B", 2},
-        {"C", 3},
-        {"C#", 4},
-        {"Db", 4},
-        {"D", 5},
-        {"D#", 6},
-        {"Eb", 6},
-        {"E", 7},
-        {"F", 8},
-        {"F#", 9},
-        {"Gb", 9},
-        {"G", 10},
-        {"G#", 11},
-        {"Ab", 11},
-    };
 }
-
-
 
 void AudioProcessor::setConfig(std::unordered_map<std::string, int> newConfig){
     config = newConfig;
 }
 
-void AudioProcessor::setInputOutput(std::string input){
-    auto now = std::chrono::system_clock::now();
-    long now_c = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << "output/" << input << "_" << now_c << ".wav";
-
-    inputOutput.first = "./res/mxml/tests"+input+".musicxml";
-    inputOutput.second = ss.str();
+void AudioProcessor::setInput(std::string sInputFilename){
+    inputFilename = genFileName(sInputFilename);
 }
 
 float AudioProcessor::getFreq(int octave, int note){
@@ -185,23 +139,17 @@ float* AudioProcessor::genFloat(std::vector<Part>& mxml){
             }
         }
     }
-
+    waveform = audioData;
     return audioData;
 
 }
 
-void AudioProcessor::convFromFloat(float fIn, int32_t& tOut){
-    double dIn = static_cast<double>(fIn) * 2147483647.0;
-    dIn = std::min(2147483647.0, std::max(-2147483648.0, dIn));
-    tOut = static_cast<int32_t>(dIn);
-}
-
 template <typename T>
-bool AudioProcessor::writeWaveFile(const char* szFileName, float* floatData, int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate) {
-    
-    
-    FILE* File = fopen(szFileName, "w+b");
+bool AudioProcessor::writeWaveFile(int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate) {
+
+    FILE* File = fopen(inputFilename.c_str(), "w+b");
     if (!File) {
+        std::cout << "not file: " << inputFilename.c_str() << std::endl;
         return false;
     }
     int32_t nBitsPerSample = sizeof(T) * 8;
@@ -230,7 +178,7 @@ bool AudioProcessor::writeWaveFile(const char* szFileName, float* floatData, int
     // update to write
     T* pData = new T[nNumSamples];
     for (int i = 0; i < nNumSamples; ++i) {
-        convFromFloat(floatData[i], pData[i]);
+        convFromFloat(waveform[i], pData[i]);
     }
 
     fwrite(pData, nDataSize, 1, File);
@@ -240,4 +188,11 @@ bool AudioProcessor::writeWaveFile(const char* szFileName, float* floatData, int
     return true;
 }
 
-template bool AudioProcessor::writeWaveFile<int32_t>(const char*, float*, int32_t, int16_t, int32_t);
+template bool AudioProcessor::writeWaveFile<int32_t>(int32_t, int16_t, int32_t);
+
+
+void AudioProcessor::convFromFloat(float fIn, int32_t& tOut){
+    double dIn = static_cast<double>(fIn) * 2147483647.0;
+    dIn = std::min(2147483647.0, std::max(-2147483648.0, dIn));
+    tOut = static_cast<int32_t>(dIn);
+}

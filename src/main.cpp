@@ -24,6 +24,7 @@ int main() {
     std::vector<Part> mxml = parseXml(inputConfig["inputFile"]);
 
     AudioProcessor audioProcessor;
+    audioProcessor.setInput(inputConfig["inputFile"]);
     audioProcessor.setConfig(outputConfig);
     float* audioData = audioProcessor.genFloat(mxml);
 
@@ -32,10 +33,7 @@ int main() {
 
 
     //Define and write to fn
-    std::string outputFile = audioProcessor.genFileName(inputConfig["inputFile"]);
     bool success = audioProcessor.writeWaveFile<int32_t>(
-        outputFile.c_str(),
-        audioData, 
         static_cast<int32_t>(audioProcessor.config["nNumSamples"]),  //note nNumSamples is added  in mxmlFac
         static_cast<int16_t>(audioProcessor.config["nNumChannels"]), 
         static_cast<int32_t>(audioProcessor.config["nSampleRate"])

@@ -30,4 +30,5 @@ struct Part {
 
 std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList);
 std::vector<Part> parseXml(const std::string& pfn);
+
 #endif
