@@ -26,18 +26,9 @@ int main() {
     AudioProcessor audioProcessor;
     audioProcessor.setInput(inputConfig["inputFile"]);
     audioProcessor.setConfig(outputConfig);
-    float* audioData = audioProcessor.genFloat(mxml);
+    audioProcessor.genWaveform(mxml);
 
-    //Gen float array
-    // float* audioData = mxmlFactory(mxml, config);
-
-
-    //Define and write to fn
-    bool success = audioProcessor.writeWaveFile<int32_t>(
-        static_cast<int32_t>(audioProcessor.config["nNumSamples"]),  //note nNumSamples is added  in mxmlFac
-        static_cast<int16_t>(audioProcessor.config["nNumChannels"]), 
-        static_cast<int32_t>(audioProcessor.config["nSampleRate"])
-    );
+    bool success = audioProcessor.writeWaveFile();
 
     if (!success) {
         std::cout << "Failed to write wave file." << std::endl;

@@ -46,12 +46,16 @@ class AudioProcessor {
         {"Ab", 11},
     };
     std::unordered_map<int, int> getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config);
-    float* waveform;
+    std::vector<float> waveform;
     // meth
     float getFreq(int octave, int note);
     int maxMeasure(std::vector<Part>& mxml);
     void convFromFloat(float fIn, int32_t& tOut);
     std::string genFileName(std::string& fn);
+    // template
+    // TODO - rfx this
+    template <typename T>
+    bool writeWaveFile(int nNumSamples, int nNumChannels, int nSampleRate);
 
    public:
     AudioProcessor();
@@ -59,13 +63,12 @@ class AudioProcessor {
     ~AudioProcessor();
     void setInput(std::string sInputFilename);
     void setConfig(std::unordered_map<std::string, int> config);
-    float* genFloat(std::vector<Part>& mxml);
+    void genWaveform(std::vector<Part>& mxml);
     std::unordered_map<std::string, int> config;
     std::string inputFilename;
+    bool writeWaveFile();
 
-    // TODO - rfx this
-    template <typename T>
-    bool writeWaveFile(int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate);
+    
 };
 
 

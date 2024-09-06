@@ -66,88 +66,83 @@ std::unordered_map<int,int> AudioProcessor::getWeights(std::vector<Part>& mxml, 
     std::unordered_map<int, int> partWeight{{0, 0}};
     int currMeasurePos;
     int baseNoteLength;
-    int measurePlace;
-    int chordStart, chordEnd, chordCard;
+    int chordEnd, chordCard;
     for (Part& currPart : mxml) {
-        std::cout << "Partname: " << currPart.partName << std::endl;
         for (Measure& currMeasure : currPart.measures) {
             currMeasurePos = (currMeasure.measurePos - 1) * config["nSampleRate"];                                     // mxml is 1-indexed
             baseNoteLength = config["nSampleRate"] * currMeasure.attributes.divisions / currMeasure.attributes.beats;  // if 4, on
-            measurePlace = currMeasurePos;
-            for (Chord& currChord : currMeasure.chords) {
-                chordStart = measurePlace;                                      // this does it
-                chordEnd = chordStart + (currChord.duration * baseNoteLength);  // how far to step
-                chordCard = currChord.octNotes.size();                          // number notes in chord
-                // std::cout << "d cS cE chordCard" << currChord.duration << " " << chordStart << " " << chordEnd <<  " " << chordCard << std::endl;
+            for (Chord& currChord : currMeasure.chords) {      
+                chordEnd = currMeasurePos+(currChord.duration * baseNoteLength);               
+                chordCard = currChord.octNotes.size(); // number notes in chord
 
                 // TODO - Necessary with current sequential part parsing approach, change to skips on rfx
-                for (int i = chordStart; i < chordEnd; i++) {
+                for (int i = currMeasurePos; i < chordEnd; i++) {
                     if (partWeight.find(i) == partWeight.end()) {
                         partWeight[i] = 0;
                     }
                     partWeight[i] += chordCard;
                 }
-                measurePlace = chordEnd;
+                currMeasurePos = chordEnd;
             }
         }
     }
-    std::cout << "end partWeight \n\n"<< std::endl;
     return partWeight;
 }
 
-float* AudioProcessor::genFloat(std::vector<Part>& mxml){
+void AudioProcessor::genWaveform(std::vector<Part>& mxml){
     // additional params
     int measureCount = maxMeasure(mxml);
     std::unordered_map<int, int> partWeight = getWeights(mxml, config);
 
     int nDataL = measureCount * config["nSampleRate"] * config["nNumChannels"];
-    float* audioData = new float[nDataL];
+    this->waveform.resize(nDataL, 0.0f);
     config["nNumSamples"] = nDataL;
 
     // add audio
-    int currMeasurePos;
-    int baseNoteLength;
+    int currMeasurePos, baseNoteLength;
+    int chordStart, chordEnd;
     int currNote = 0;
 
     // debugging
-    float lastval = 1.0f;
 
     for (Part& currPart : mxml) {
         for (Measure& currMeasure : currPart.measures) {
             currMeasurePos = (currMeasure.measurePos - 1) * config["nSampleRate"];                                     // mxml is 1-indexed
             baseNoteLength = config["nSampleRate"] * currMeasure.attributes.divisions / currMeasure.attributes.beats;  // if 4, on
 
-            int measurePlace = currMeasurePos;
             for (Chord& currChord : currMeasure.chords) {
-                int chordStart = measurePlace;
-                int chordEnd = measurePlace + (currChord.duration * baseNoteLength);  // how far to step
+                chordStart = currMeasurePos;
+                chordEnd = currMeasurePos + (currChord.duration * baseNoteLength);  // how far to step
 
                 std::vector<float> chordFreq{};
                 for (std::pair<int, std::string>& currNote : currChord.octNotes) {
                     chordFreq.push_back(getFreq(currNote.first, keyMap[currNote.second]));
                 }
 
-                int crossfade = std::min(100, (chordEnd - chordStart) / 2);
                 for (int i = chordStart; i <= chordEnd; ++i) {
                     float t = static_cast<float>(i) / config["nSampleRate"];
                     float norm = 1.0f / partWeight[i];
                     for (float& currNote : chordFreq) {
-                        audioData[i] += norm * std::sin(2 * M_PI * currNote * t);  // Still clips but passable
+                        this->waveform[i] += norm * std::sin(2 * M_PI * currNote * t);  // Still clips but passable
                     }
                 }
-                measurePlace = chordEnd;
+                currMeasurePos = chordEnd;
             }
         }
     }
-    waveform = audioData;
-    return audioData;
+}
 
+bool AudioProcessor::writeWaveFile(){
+    return AudioProcessor::writeWaveFile<int32_t>(
+            config["nNumSamples"],  //note nNumSamples is added  in mxmlFac
+        config["nNumChannels"], 
+        config["nSampleRate"]
+    );
 }
 
 template <typename T>
-bool AudioProcessor::writeWaveFile(int32_t nNumSamples, int16_t nNumChannels, int32_t nSampleRate) {
-
-    FILE* File = fopen(inputFilename.c_str(), "w+b");
+bool AudioProcessor::writeWaveFile(int nNumSamples, int nNumChannels, int nSampleRate) {
+    FILE* File = fopen(this->inputFilename.c_str(), "w+b");
     if (!File) {
         std::cout << "not file: " << inputFilename.c_str() << std::endl;
         return false;
@@ -178,7 +173,7 @@ bool AudioProcessor::writeWaveFile(int32_t nNumSamples, int16_t nNumChannels, in
     // update to write
     T* pData = new T[nNumSamples];
     for (int i = 0; i < nNumSamples; ++i) {
-        convFromFloat(waveform[i], pData[i]);
+        convFromFloat(this->waveform[i], pData[i]);
     }
 
     fwrite(pData, nDataSize, 1, File);
@@ -187,8 +182,6 @@ bool AudioProcessor::writeWaveFile(int32_t nNumSamples, int16_t nNumChannels, in
     fclose(File);
     return true;
 }
-
-template bool AudioProcessor::writeWaveFile<int32_t>(int32_t, int16_t, int32_t);
 
 
 void AudioProcessor::convFromFloat(float fIn, int32_t& tOut){
