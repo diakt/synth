@@ -2,7 +2,6 @@
 #define MXML
 
 #include <libxml/tree.h>
-
 #include <string>
 #include <vector>
 

@@ -29,7 +29,6 @@ int main() {
     audioProcessor.genWaveform(mxml);
 
     bool success = audioProcessor.writeWaveFile();
-
     if (!success) {
         std::cout << "Failed to write wave file." << std::endl;
         return 1;
