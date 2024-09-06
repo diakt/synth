@@ -27,22 +27,35 @@ class AudioProcessor {
    private:
     // var
     inline static std::unordered_map<std::string, int> keyMap = {
-        {"A", 0}, {"A#", 1}, {"Bb", 1},
-        {"B", 2}, {"C", 3}, {"C#", 4},
-        {"Db", 4}, {"D", 5}, {"D#", 6},
-        {"Eb", 6}, {"E", 7}, {"F", 8},
-        {"F#", 9}, {"Gb", 9}, {"G", 10},
-        {"G#", 11}, {"Ab", 11},
+        {"A", 0},
+        {"A#", 1},
+        {"Bb", 1},
+        {"B", 2},
+        {"C", 3},
+        {"C#", 4},
+        {"Db", 4},
+        {"D", 5},
+        {"D#", 6},
+        {"Eb", 6},
+        {"E", 7},
+        {"F", 8},
+        {"F#", 9},
+        {"Gb", 9},
+        {"G", 10},
+        {"G#", 11},
+        {"Ab", 11},
     };
-    std::unordered_map<int, int> getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config);
     std::vector<float> waveform;
     std::unordered_map<std::string, int> config;
     std::string inputFilename;
-    // meth
-    float getFreq(int octave, int note);
-    int maxMeasure(std::vector<Part>& mxml);
+
+    // const meth
+    std::unordered_map<int, int> getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config) const;
+    float getFreq(int octave, int note) const;
+    std::string genFileName(std::string& fn) const;
+    int maxMeasure(std::vector<Part>& mxml) const;
+
     void convFromFloat(float fIn, int32_t& tOut);
-    std::string genFileName(std::string& fn);
     // template
     // TODO - rfx this
     template <typename T>
@@ -55,11 +68,7 @@ class AudioProcessor {
     void setInput(std::string sInputFilename);
     void setConfig(std::unordered_map<std::string, int> config);
     void genWaveform(std::vector<Part>& mxml);
-    
     bool writeWaveFile();
-
-    
 };
-
 
 #endif

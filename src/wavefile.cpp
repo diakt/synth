@@ -1,5 +1,7 @@
 // #include "wavefile.hpp"
 
+#include "wavefile.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -7,13 +9,12 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 #include <type_traits>
 #include <typeinfo>
 #include <unordered_map>
-#include <sstream>
 
 #include "mxml_parser.hpp"
-#include "wavefile.hpp"
 
 //////////////////////////////
 //////////////////////////////
@@ -22,25 +23,25 @@
 AudioProcessor::AudioProcessor() {
 }
 
-AudioProcessor::~AudioProcessor(){};
-
+AudioProcessor::~AudioProcessor() {};
 
 AudioProcessor::AudioProcessor(std::unordered_map<std::string, int> config) : config(config) {
 }
 
-void AudioProcessor::setConfig(std::unordered_map<std::string, int> newConfig){
+void AudioProcessor::setConfig(std::unordered_map<std::string, int> newConfig) {
     config = newConfig;
 }
 
-void AudioProcessor::setInput(std::string sInputFilename){
+void AudioProcessor::setInput(std::string sInputFilename) {
     inputFilename = genFileName(sInputFilename);
 }
 
-float AudioProcessor::getFreq(int octave, int note){
+float AudioProcessor::getFreq(int octave, int note) const {
+    // TODO - memoize? may be makework
     return (float)(440 * pow(2.0, ((double)((octave - 4) * 12 + note)) / 12.0));
 }
 
-std::string AudioProcessor::genFileName(std::string& fn) {
+std::string AudioProcessor::genFileName(std::string& fn) const {
     auto now = std::chrono::system_clock::now();
     long now_c = std::chrono::system_clock::to_time_t(now);
 
@@ -49,17 +50,18 @@ std::string AudioProcessor::genFileName(std::string& fn) {
     return ss.str();
 }
 
-int AudioProcessor::maxMeasure(std::vector<Part>& mxml){
+int AudioProcessor::maxMeasure(std::vector<Part>& mxml) const {
+    // TODO - assume last measure is latest
     int maxM = 0;
-    for (Part& x : mxml){
-        for (Measure& y: x.measures){
+    for (Part& x : mxml) {
+        for (Measure& y : x.measures) {
             maxM = std::max(maxM, y.measurePos);
         }
     }
     return maxM;
 }
 
-std::unordered_map<int,int> AudioProcessor::getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config) {
+std::unordered_map<int, int> AudioProcessor::getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config) const {
     // calculate relevant weightings of notes (more means cut amplitude to avoid clipping)
     std::unordered_map<int, int> partWeight{{0, 0}};
     int currMeasurePos;
@@ -69,9 +71,9 @@ std::unordered_map<int,int> AudioProcessor::getWeights(std::vector<Part>& mxml, 
         for (Measure& currMeasure : currPart.measures) {
             currMeasurePos = (currMeasure.measurePos - 1) * config["nSampleRate"];                                     // mxml is 1-indexed
             baseNoteLength = config["nSampleRate"] * currMeasure.attributes.divisions / currMeasure.attributes.beats;  // if 4, on
-            for (Chord& currChord : currMeasure.chords) {      
-                chordEnd = currMeasurePos+(currChord.duration * baseNoteLength);               
-                chordCard = currChord.octNotes.size(); // number notes in chord
+            for (Chord& currChord : currMeasure.chords) {
+                chordEnd = currMeasurePos + (currChord.duration * baseNoteLength);
+                chordCard = currChord.octNotes.size();  // number notes in chord
 
                 // TODO - Necessary with current sequential part parsing approach, change to skips on rfx
                 for (int i = currMeasurePos; i < chordEnd; i++) {
@@ -87,7 +89,7 @@ std::unordered_map<int,int> AudioProcessor::getWeights(std::vector<Part>& mxml, 
     return partWeight;
 }
 
-void AudioProcessor::genWaveform(std::vector<Part>& mxml){
+void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
     // additional params
     int measureCount = maxMeasure(mxml);
     std::unordered_map<int, int> partWeight = getWeights(mxml, config);
@@ -130,12 +132,11 @@ void AudioProcessor::genWaveform(std::vector<Part>& mxml){
     }
 }
 
-bool AudioProcessor::writeWaveFile(){
+bool AudioProcessor::writeWaveFile() {
     return AudioProcessor::writeWaveFile<int32_t>(
-            config["nNumSamples"],  //note nNumSamples is added  in mxmlFac
-        config["nNumChannels"], 
-        config["nSampleRate"]
-    );
+        config["nNumSamples"],  // note nNumSamples is added  in mxmlFac
+        config["nNumChannels"],
+        config["nSampleRate"]);
 }
 
 template <typename T>
@@ -181,8 +182,7 @@ bool AudioProcessor::writeWaveFile(int nNumSamples, int nNumChannels, int nSampl
     return true;
 }
 
-
-void AudioProcessor::convFromFloat(float fIn, int32_t& tOut){
+void AudioProcessor::convFromFloat(float fIn, int32_t& tOut) {
     double dIn = static_cast<double>(fIn) * 2147483647.0;
     dIn = std::min(2147483647.0, std::max(-2147483648.0, dIn));
     tOut = static_cast<int32_t>(dIn);
