@@ -30,4 +30,32 @@ struct Part {
 std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList);
 std::vector<Part> parseXml(const std::string& pfn);
 
+class MxmlParser {
+    private:
+        std::string inputFile;
+        std::vector<Part> parsedMxml;
+
+        //utils
+        std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList);
+        Part partParser(xmlNode* partNode);
+        Measure measureParser(xmlNode* measureNode);
+        std::pair<bool, Chord> chordParser(xmlNode* chordNode);
+        MeasureAttribute measureAttributeParser(xmlNode* attribNode);
+
+        //tconv
+        int xmlStrContToInt(xmlNode* node);
+        std::string xmlStrContToStr(xmlNode* node);
+        int xmlStrPropToInt(xmlNode* node, const unsigned char* arg);
+        std::string xmlStrPropToStr(xmlNode* node, const unsigned char* arg);
+
+        
+    public:
+        MxmlParser();
+        ~MxmlParser();
+        void parseMxml();
+        void setInputFile(std::string fn);
+        std::vector<Part> getParsedMxml();
+};
+
+
 #endif

@@ -12,6 +12,12 @@ int main() {
     std::unordered_map<std::string, std::string> inputConfig {
         {"inputFile", "chords"},
     };
+    MxmlParser mxmlParser;
+    mxmlParser.setInputFile("chords");
+    mxmlParser.parseMxml();
+    std::vector<Part> mxml = mxmlParser.getParsedMxml();
+
+
 
     //Config for file generation
     std::unordered_map<std::string, int> outputConfig {
@@ -19,9 +25,6 @@ int main() {
         {"nNumChannels", 1},
         {"volume", 1},
     };
-
-    //Scoreparsing from musicxml
-    std::vector<Part> mxml = parseXml(inputConfig["inputFile"]);
 
     AudioProcessor audioProcessor;
     audioProcessor.setInput(inputConfig["inputFile"]);

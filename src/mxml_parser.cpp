@@ -11,11 +11,17 @@
 #define USTR(x) (const unsigned char*)(x)
 
 
+
+MxmlParser::MxmlParser(){}
+
+MxmlParser::~MxmlParser(){}
+
+
 //////////////////////////////////////////
 ////// xml harvest utils /////////////////
 //////////////////////////////////////////
 
-int xmlStrContToInt(xmlNode* node) {
+int MxmlParser::xmlStrContToInt(xmlNode* node) {
     xmlChar* cont = xmlNodeGetContent(node);
     if (cont){
         size_t contL = xmlStrlen(cont);
@@ -26,7 +32,7 @@ int xmlStrContToInt(xmlNode* node) {
     
 }
 
-std::string xmlStrContToStr(xmlNode* node) {
+std::string MxmlParser::xmlStrContToStr(xmlNode* node) {
     xmlChar* cont = xmlNodeGetContent(node);
     if (cont){
         size_t contL = xmlStrlen(cont);
@@ -35,7 +41,7 @@ std::string xmlStrContToStr(xmlNode* node) {
     return "Unknown";
 }
 
-int xmlStrPropToInt(xmlNode* node, const unsigned char* arg) {
+int MxmlParser::xmlStrPropToInt(xmlNode* node, const unsigned char* arg) {
     xmlChar* prop = xmlGetProp(node, arg);
     if (prop) {
         size_t propL = xmlStrlen(prop);
@@ -45,11 +51,10 @@ int xmlStrPropToInt(xmlNode* node, const unsigned char* arg) {
     return -42; //TODO - magic num
 }
 
-std::string xmlStrPropToStr(xmlNode* node, const unsigned char* arg) {
+std::string MxmlParser::xmlStrPropToStr(xmlNode* node, const unsigned char* arg) {
     xmlChar* prop = xmlGetProp(node, arg);
     if (prop) {
         size_t propL = xmlStrlen(prop);
-        // std::string temp(reinterpret_cast<const char*>(propVal), propL);
         return std::string(static_cast<const char*>(static_cast<const void*>(prop)), propL);
     }
     return "Unknown";
@@ -63,7 +68,7 @@ std::shared_ptr<xmlNode> makeXmlNodeShared(xmlNode* node) {
 //////////// main res ////////////////////
 //////////////////////////////////////////
 
-MeasureAttribute measureAttributeParser(xmlNode* attribNode) {
+MeasureAttribute MxmlParser::measureAttributeParser(xmlNode* attribNode) {
     MeasureAttribute thisAttribute;
 
     if (attribNode) {
@@ -91,7 +96,7 @@ MeasureAttribute measureAttributeParser(xmlNode* attribNode) {
     return thisAttribute;
 }
 
-std::pair<bool, Chord> chordParser(xmlNode* chordNode) {
+std::pair<bool, Chord> MxmlParser::chordParser(xmlNode* chordNode) {
     bool isChord;
     Chord thisChord;
     int alter = 0;
@@ -137,7 +142,7 @@ std::pair<bool, Chord> chordParser(xmlNode* chordNode) {
     return std::pair<bool, Chord>(isChord, thisChord);
 }
 
-Measure measureParser(xmlNode* measureNode) {
+Measure MxmlParser::measureParser(xmlNode* measureNode) {
     Measure thisMeasure;
 
     if (measureNode) {
@@ -177,7 +182,7 @@ Measure measureParser(xmlNode* measureNode) {
     return thisMeasure;
 }
 
-Part partParser(xmlNode* partNode) {
+Part MxmlParser::partParser(xmlNode* partNode) {
     Part thisPart;
 
     if (partNode) {
@@ -199,7 +204,7 @@ Part partParser(xmlNode* partNode) {
     return thisPart;
 }
 
-std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList) {
+std::vector<Part> MxmlParser::partwiseParser(xmlNode* node, std::vector<Part>& partList) {
     std::vector<Part> thisPartwise;
     if (node) {
         static const std::array<const unsigned char*, 1> mainPhrases = {
@@ -217,26 +222,26 @@ std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList) {
     return thisPartwise;
 }
 
-//////////////////////////////////////////
-//////////// section entry ///////////////
-//////////////////////////////////////////
+void MxmlParser::setInputFile(std::string fn){
+    inputFile = "./res/mxml/tests/" + fn + ".musicxml";
+}
 
-std::vector<Part> parseXml(const std::string& pfn) {
-    std::vector<Part> res;
-    const std::string mfn = "./res/mxml/tests/" + pfn + ".musicxml";
-
+void MxmlParser::parseMxml(){
     std::unique_ptr<xmlDoc, decltype(&xmlFreeDoc)> docPtr(
-        xmlReadFile(mfn.c_str(), nullptr, 0),  // 2part spec file encoding
+        xmlReadFile(inputFile.c_str(), nullptr, 0),  // 2part spec file encoding
         xmlFreeDoc);
 
     if (!docPtr) {
         std::cerr << "Error: could not parse file" << std::endl;
-        return res;
+        return;
     }
 
     xmlNode* root_element = xmlDocGetRootElement(docPtr.get());
-    res = partwiseParser(root_element, res);
+    parsedMxml = partwiseParser(root_element, parsedMxml);
     xmlCleanupParser();
 
-    return res;
+}
+
+std::vector<Part> MxmlParser::getParsedMxml(){
+    return parsedMxml;
 }
