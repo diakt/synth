@@ -8,16 +8,8 @@
 
 int main() {
 
-    //Config for file generation
-    std::unordered_map<std::string, std::string> inputConfig {
-        {"inputFile", "chords"},
-    };
-    MxmlParser mxmlParser;
-    mxmlParser.setInputFile("chords");
-    mxmlParser.parseMxml();
-    std::vector<Part> mxml = mxmlParser.getParsedMxml();
-
-
+    //Config 
+    std::string inputFilename = "chords";
 
     //Config for file generation
     std::unordered_map<std::string, int> outputConfig {
@@ -26,8 +18,16 @@ int main() {
         {"volume", 1},
     };
 
+
+    //Parser object
+    MxmlParser mxmlParser;
+    mxmlParser.setInputFile(inputFilename);
+    mxmlParser.parseMxml();
+    std::vector<Part> mxml = mxmlParser.getParsedMxml();
+
+    //Waveform generation and fwrite
     AudioProcessor audioProcessor;
-    audioProcessor.setInput(inputConfig["inputFile"]);
+    audioProcessor.setInput(inputFilename);
     audioProcessor.setConfig(outputConfig);
     audioProcessor.genWaveform(mxml);
 

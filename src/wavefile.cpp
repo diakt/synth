@@ -1,17 +1,7 @@
-// #include "wavefile.hpp"
-
 #include "wavefile.hpp"
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <iostream>
 #include <sstream>
-#include <type_traits>
-#include <typeinfo>
 #include <unordered_map>
 
 #include "mxml_parser.hpp"
@@ -103,8 +93,6 @@ void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
     int chordStart, chordEnd;
     int currNote = 0;
 
-    // debugging
-
     for (Part& currPart : mxml) {
         for (Measure& currMeasure : currPart.measures) {
             currMeasurePos = (currMeasure.measurePos - 1) * config["nSampleRate"];                                     // mxml is 1-indexed
@@ -118,12 +106,12 @@ void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
                 for (std::pair<int, std::string>& currNote : currChord.octNotes) {
                     chordFreq.push_back(getFreq(currNote.first, keyMap[currNote.second]));
                 }
-
+                //Todo - Implement enveloping for discont handling 
                 for (int i = chordStart; i <= chordEnd; ++i) {
                     float t = static_cast<float>(i) / config["nSampleRate"];
                     float norm = 1.0f / partWeight[i];
                     for (float& currNote : chordFreq) {
-                        this->waveform[i] += norm * std::sin(2 * M_PI * currNote * t);  // Still clips but passable
+                        this->waveform[i] += norm * std::sin(2 * M_PI * currNote * t);  
                     }
                 }
                 currMeasurePos = chordEnd;
@@ -133,6 +121,7 @@ void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
 }
 
 bool AudioProcessor::writeWaveFile() {
+    //TODO - Don't look too hard
     return AudioProcessor::writeWaveFile<int32_t>(
         config["nNumSamples"],  // note nNumSamples is added  in mxmlFac
         config["nNumChannels"],

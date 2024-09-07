@@ -9,7 +9,7 @@ In the longer term, I suspect I'm going to end up with functionality similar to 
 
 
 # TODO:
-0) Rfx almost everything
+0) Reformat structs and diamond the dependency structure
 1) Handle note transfer popping, straightforward post enveloping
 3) Extend factory support to non-sine
 7) Define facilities for bpm conversion to sampling rate.

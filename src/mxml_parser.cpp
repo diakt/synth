@@ -1,21 +1,18 @@
+
 #include "mxml_parser.hpp"
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
-#include <array>
 #include <iostream>
 #include <string>
 #include <vector>
 
 #define USTR(x) (const unsigned char*)(x)
 
+MxmlParser::MxmlParser() {}
 
-
-MxmlParser::MxmlParser(){}
-
-MxmlParser::~MxmlParser(){}
-
+MxmlParser::~MxmlParser() {}
 
 //////////////////////////////////////////
 ////// xml harvest utils /////////////////
@@ -23,18 +20,17 @@ MxmlParser::~MxmlParser(){}
 
 int MxmlParser::xmlStrContToInt(xmlNode* node) {
     xmlChar* cont = xmlNodeGetContent(node);
-    if (cont){
+    if (cont) {
         size_t contL = xmlStrlen(cont);
         std::string temp(static_cast<const char*>(static_cast<const void*>(cont)), contL);
         return std::stoi(temp);
     }
-    return -43; //TODO - again magic num
-    
+    return -43;  // TODO - again magic num
 }
 
 std::string MxmlParser::xmlStrContToStr(xmlNode* node) {
     xmlChar* cont = xmlNodeGetContent(node);
-    if (cont){
+    if (cont) {
         size_t contL = xmlStrlen(cont);
         return std::string(static_cast<const char*>(static_cast<const void*>(cont)), contL);
     }
@@ -47,8 +43,8 @@ int MxmlParser::xmlStrPropToInt(xmlNode* node, const unsigned char* arg) {
         size_t propL = xmlStrlen(prop);
         std::string temp(static_cast<const char*>(static_cast<const void*>(prop)), propL);
         return std::stoi(temp);
-    } 
-    return -42; //TODO - magic num
+    }
+    return -42;  // TODO - magic num
 }
 
 std::string MxmlParser::xmlStrPropToStr(xmlNode* node, const unsigned char* arg) {
@@ -72,12 +68,6 @@ MeasureAttribute MxmlParser::measureAttributeParser(xmlNode* attribNode) {
     MeasureAttribute thisAttribute;
 
     if (attribNode) {
-        static const std::array<const unsigned char*, 4> attribPhrases = {
-            USTR("divisions"),
-            USTR("time"),
-            USTR("beats"),
-            USTR("beat-type")};
-
         for (auto child = makeXmlNodeShared(attribNode->children); child; child = makeXmlNodeShared(child->next)) {
             if (xmlStrcmp(child.get()->name, attribPhrases[0]) == 0) {  // divisions
                 thisAttribute.divisions = xmlStrContToInt(child.get());
@@ -146,14 +136,7 @@ Measure MxmlParser::measureParser(xmlNode* measureNode) {
     Measure thisMeasure;
 
     if (measureNode) {
-        static const std::array<const unsigned char*, 3> measurePhrases = {
-            USTR("number"),
-            USTR("attributes"),
-            USTR("note"),
-        };
-
         thisMeasure.measurePos = xmlStrPropToInt(measureNode, measurePhrases[0]);  // number
-
         bool chordFlag = 0;
         std::pair<bool, Chord> ret;
 
@@ -163,7 +146,6 @@ Measure MxmlParser::measureParser(xmlNode* measureNode) {
 
             } else if (xmlStrcmp(child.get()->name, measurePhrases[2]) == 0) {  // note
                 ret = chordParser(child.get());
-
                 if (ret.first) {       // indicates chord found
                     if (!chordFlag) {  // no current chord, so new elt to chords
                         chordFlag = 1;
@@ -186,12 +168,7 @@ Part MxmlParser::partParser(xmlNode* partNode) {
     Part thisPart;
 
     if (partNode) {
-        static const std::array<const unsigned char*, 2> partPhrases = {
-            USTR("id"),
-            USTR("measure"),
-        };
         thisPart.partName = xmlStrPropToStr(partNode, partPhrases[0]);
-
         for (auto child = std::shared_ptr<xmlNode>(partNode->children, [](xmlNode*) {}); child; child = std::shared_ptr<xmlNode>(child->next, [](xmlNode*) {})) {
             if (child->type != XML_TEXT_NODE) {
                 if (xmlStrcmp(child->name, partPhrases[1]) == 0) {
@@ -207,10 +184,6 @@ Part MxmlParser::partParser(xmlNode* partNode) {
 std::vector<Part> MxmlParser::partwiseParser(xmlNode* node, std::vector<Part>& partList) {
     std::vector<Part> thisPartwise;
     if (node) {
-        static const std::array<const unsigned char*, 1> mainPhrases = {
-            USTR("part"),
-        };
-
         for (auto child = std::shared_ptr<xmlNode>(node->children, [](xmlNode*) {}); child; child = std::shared_ptr<xmlNode>(child->next, [](xmlNode*) {})) {
             if (child->type != XML_TEXT_NODE) {  // not just a placeholder
                 if (xmlStrcmp(child->name, mainPhrases[0]) == 0) {
@@ -222,11 +195,11 @@ std::vector<Part> MxmlParser::partwiseParser(xmlNode* node, std::vector<Part>& p
     return thisPartwise;
 }
 
-void MxmlParser::setInputFile(std::string fn){
+void MxmlParser::setInputFile(std::string fn) {
     inputFile = "./res/mxml/tests/" + fn + ".musicxml";
 }
 
-void MxmlParser::parseMxml(){
+void MxmlParser::parseMxml() {
     std::unique_ptr<xmlDoc, decltype(&xmlFreeDoc)> docPtr(
         xmlReadFile(inputFile.c_str(), nullptr, 0),  // 2part spec file encoding
         xmlFreeDoc);
@@ -239,9 +212,8 @@ void MxmlParser::parseMxml(){
     xmlNode* root_element = xmlDocGetRootElement(docPtr.get());
     parsedMxml = partwiseParser(root_element, parsedMxml);
     xmlCleanupParser();
-
 }
 
-std::vector<Part> MxmlParser::getParsedMxml(){
+std::vector<Part> MxmlParser::getParsedMxml() {
     return parsedMxml;
 }

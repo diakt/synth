@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#define USTR(x) (const unsigned char*)(x)
+
 struct MeasureAttribute {
     int beats;
     int beatType;
@@ -27,13 +29,31 @@ struct Part {
     std::vector<Measure> measures;
 };
 
-std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList);
-std::vector<Part> parseXml(const std::string& pfn);
 
 class MxmlParser {
     private:
         std::string inputFile;
         std::vector<Part> parsedMxml;
+
+        //phrases
+        const std::array<const unsigned char*, 4> attribPhrases =  {
+            USTR("divisions"),
+            USTR("time"),
+            USTR("beats"),
+            USTR("beat-type")};
+        const std::array<const unsigned char*, 3> measurePhrases = {
+            USTR("number"),
+            USTR("attributes"),
+            USTR("note"),
+        };
+        const std::array<const unsigned char*, 2> partPhrases = {
+            USTR("id"),
+            USTR("measure"),
+        };
+        const std::array<const unsigned char*, 1> mainPhrases = {
+            USTR("part"),
+        };
+
 
         //utils
         std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList);
