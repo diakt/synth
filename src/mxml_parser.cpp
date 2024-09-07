@@ -10,44 +10,47 @@
 
 #define USTR(x) (const unsigned char*)(x)
 
+
 //////////////////////////////////////////
 ////// xml harvest utils /////////////////
 //////////////////////////////////////////
 
 int xmlStrContToInt(xmlNode* node) {
     xmlChar* cont = xmlNodeGetContent(node);
-    size_t contL = xmlStrlen(cont);
-    std::string temp(reinterpret_cast<const char*>(cont), contL);
-    return std::stoi(temp);
+    if (cont){
+        size_t contL = xmlStrlen(cont);
+        std::string temp(static_cast<const char*>(static_cast<const void*>(cont)), contL);
+        return std::stoi(temp);
+    }
+    return -43; //TODO - again magic num
+    
 }
 
 std::string xmlStrContToStr(xmlNode* node) {
     xmlChar* cont = xmlNodeGetContent(node);
-    size_t contL = xmlStrlen(cont);
-    std::string temp(reinterpret_cast<const char*>(cont), contL);
-    return temp;
+    if (cont){
+        size_t contL = xmlStrlen(cont);
+        return std::string(static_cast<const char*>(static_cast<const void*>(cont)), contL);
+    }
+    return "Unknown";
 }
 
 int xmlStrPropToInt(xmlNode* node, const unsigned char* arg) {
-    int res;
-    xmlChar* propVal = xmlGetProp(node, arg);
-    if (propVal) {
-        size_t propL = xmlStrlen(propVal);
-        std::string temp(reinterpret_cast<const char*>(propVal), propL);
-        res = std::stoi(temp);
-    } else {
-        res = -69;
-    }
-    return res;
+    xmlChar* prop = xmlGetProp(node, arg);
+    if (prop) {
+        size_t propL = xmlStrlen(prop);
+        std::string temp(static_cast<const char*>(static_cast<const void*>(prop)), propL);
+        return std::stoi(temp);
+    } 
+    return -42; //TODO - magic num
 }
 
 std::string xmlStrPropToStr(xmlNode* node, const unsigned char* arg) {
-    std::string res;
-    xmlChar* propVal = xmlGetProp(node, arg);
-    if (propVal) {
-        size_t propL = xmlStrlen(propVal);
-        std::string temp(reinterpret_cast<const char*>(propVal), propL);
-        return temp;
+    xmlChar* prop = xmlGetProp(node, arg);
+    if (prop) {
+        size_t propL = xmlStrlen(prop);
+        // std::string temp(reinterpret_cast<const char*>(propVal), propL);
+        return std::string(static_cast<const char*>(static_cast<const void*>(prop)), propL);
     }
     return "Unknown";
 }
