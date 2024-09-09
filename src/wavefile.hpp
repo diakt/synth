@@ -7,6 +7,17 @@
 
 #include "mxml_parser.hpp"
 
+// TODO - more elegant approach?
+namespace std {
+    template <>
+    struct hash<std::pair<int, int>> {
+        size_t operator()(const std::pair<int, int>& p) const {
+            return hash<int>()(p.first) ^ (hash<int>()(p.second) << 1);
+        }
+    };
+}
+
+
 struct SMinimalWaveFileHeader {
     unsigned char m_szChunkID[4];
     uint32_t m_nChunkSize;
@@ -48,6 +59,8 @@ class AudioProcessor {
     std::vector<float> waveform;
     std::unordered_map<std::string, int> config;
     std::string inputFilename;
+    std::unordered_map<std::pair<int,int>, float> freqCache;
+    
 
     // const meth
     std::unordered_map<int, int> getWeights(std::vector<Part>& mxml, std::unordered_map<std::string, int>& config) const;

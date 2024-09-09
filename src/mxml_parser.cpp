@@ -108,14 +108,14 @@ std::pair<bool, Chord> MxmlParser::chordParser(xmlNode* chordNode) {
                         currNote.first = xmlStrContToInt(subChild.get());
                     } else if (xmlStrcmp(subChild.get()->name, chordPhrases[2]) == 0) {  // step
                         currNote.second = xmlStrContToStr(subChild.get());
+                    } else if (xmlStrcmp(subChild.get()->name, chordPhrases[5]) == 0) {  // alter flag
+                        alter = xmlStrContToInt(subChild.get());  // if -1, flat
                     }
                 }
             } else if (xmlStrcmp(child.get()->name, chordPhrases[3]) == 0) {  // duration
                 thisChord.duration = xmlStrContToInt(child.get());
             } else if (xmlStrcmp(child.get()->name, chordPhrases[4]) == 0) {  // chord flag
                 isChord = true;
-            } else if (xmlStrcmp(child.get()->name, chordPhrases[5]) == 0) {  // alter flag
-                alter = xmlStrContToInt(child.get());                         // if -1, flat
             }
         }
 

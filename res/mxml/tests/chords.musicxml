@@ -49,6 +49,16 @@
         <duration>4</duration>
         <type>whole</type>
       </note>
+      <note>
+        <chord/>
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>5</octave>
+        </pitch>
+        <duration>4</duration>
+        <type>whole</type>
+      </note>
     </measure>
     <measure number="2">
       <note>
@@ -107,6 +117,16 @@
         <duration>4</duration>
         <type>whole</type>
       </note>
+      <note>
+        <chord/>
+        <pitch>
+          <step>C</step>
+          <octave>5</octave>
+        </pitch>
+        <duration>4</duration>
+        <type>whole</type>
+      </note>
+      
     </measure>
     <measure number="4">
       <note>
@@ -189,6 +209,15 @@
         <chord/>
         <pitch>
           <step>D</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>4</duration>
+        <type>whole</type>
+      </note>
+      <note>
+        <chord/>
+        <pitch>
+          <step>G</step>
           <octave>4</octave>
         </pitch>
         <duration>4</duration>

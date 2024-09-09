@@ -93,6 +93,10 @@ void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
     int chordStart, chordEnd, chordLen;
     int currNote = 0;
 
+    //TODO - bush league enveloping
+    int stepIn, stepOut;
+    
+
     for (Part& currPart : mxml) {
         for (Measure& currMeasure : currPart.measures) {
             currMeasurePos = (currMeasure.measurePos - 1) * config["nSampleRate"];                                     // mxml is 1-indexed
@@ -101,26 +105,36 @@ void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
             for (Chord& currChord : currMeasure.chords) {
                 chordLen = currChord.duration * baseNoteLength;
                 chordStart = currMeasurePos;
-                chordEnd = currMeasurePos + chordLen;  // how far to step
-                float stepOut = chordLen/10;
-                // std::cout << "chordLen chordStart"
+                chordEnd = currMeasurePos + chordLen; 
+
+                //TODO - bush league enveloping
+                stepIn = chordLen/400;
+                stepOut = chordLen/20;
+                
 
                 std::vector<float> chordFreq{};
                 for (std::pair<int, std::string>& currNote : currChord.octNotes) {
-                    chordFreq.push_back(getFreq(currNote.first, keyMap[currNote.second]));
+                    //TODO - rfx keyMap to within parser. Should have done this earlier
+                    std::pair<int, int> temp {currNote.first, keyMap[currNote.second]};
+                    if (freqCache.find(temp) == freqCache.end()){
+                        freqCache[temp] = getFreq(currNote.first, keyMap[currNote.second]);
+                    }
+                    chordFreq.push_back(freqCache[temp]);
                 }
-                // Todo - Implement enveloping for discont handling
                 for (int i = chordStart; i <= chordEnd; ++i) {
                     float t = static_cast<float>(i) / config["nSampleRate"];
                     float norm = 1.0f / partWeight[i];
                     float adj = 1.0f;
-                    if (i < chordStart + stepOut) {
-                        adj = 1.0f / stepOut * (i - chordStart);
-                    } else if (i > chordEnd - stepOut) {
+
+                    //TODO - bushleague enveloping
+                    if (i < chordStart + stepIn) {
+                        adj = 1.0f / stepIn * (i - chordStart);
+                    } else if (chordEnd - stepOut < i) {
                         adj = 1.0f / stepOut * (chordEnd-i);
                     } else {
                         adj = 1.0f;
                     }
+
                     for (float& currNote : chordFreq) {
                         this->waveform[i] += adj * norm * std::sin(2 * M_PI * currNote * t);
                     }
@@ -187,3 +201,82 @@ void AudioProcessor::convFromFloat(float fIn, int32_t& tOut) {
     dIn = std::min(2147483647.0, std::max(-2147483648.0, dIn));
     tOut = static_cast<int32_t>(dIn);
 }
+
+
+// namespace std {
+//     template <>
+//     struct hash<std::pair<int, int>> {
+//         size_t operator()(const std::pair<int, int>& p) const {
+//             return hash<int>()(p.first) ^ (hash<int>()(p.second) << 1);
+//         }
+//     };
+// }
+
+// void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
+//     int measureCount = maxMeasure(mxml);
+//     std::unordered_map<int, int> partWeight = getWeights(mxml, config);
+
+//     int nDataL = measureCount * config["nSampleRate"] * config["nNumChannels"];
+//     this->waveform.resize(nDataL, 0.0f);
+//     config["nNumSamples"] = nDataL;
+
+//     int currMeasurePos, baseNoteLength;
+//     int chordStart, chordEnd, chordLen;
+
+//     // Pre-calculate frequencies
+//     std::unordered_map<std::pair<int, int>, double> freqCache;
+
+//     for (Part& currPart : mxml) {
+//         for (Measure& currMeasure : currPart.measures) {
+//             currMeasurePos = (currMeasure.measurePos - 1) * config["nSampleRate"];
+//             baseNoteLength = config["nSampleRate"] * currMeasure.attributes.divisions / currMeasure.attributes.beats;
+
+//             for (Chord& currChord : currMeasure.chords) {
+//                 chordLen = currChord.duration * baseNoteLength;
+//                 chordStart = currMeasurePos;
+//                 chordEnd = currMeasurePos + chordLen;
+//                 float attack = chordLen * 0.01f;
+//                 float release = chordLen * 0.05f;
+
+//                 std::vector<std::pair<double, double>> chordFreqs; // freq, phase
+//                 for (std::pair<int, std::string>& currNote : currChord.octNotes) {
+//                     int octave = currNote.first;
+//                     int note = keyMap[currNote.second];
+//                     auto key = std::make_pair(octave, note);
+//                     if (freqCache.find(key) == freqCache.end()) {
+//                         freqCache[key] = 440.0 * std::pow(2.0, (double)((octave - 4) * 12 + note) / 12.0);
+//                     }
+//                     chordFreqs.emplace_back(freqCache[key], (double)rand() / RAND_MAX * 2 * M_PI);
+//                 }
+
+//                 for (int i = chordStart; i < chordEnd; ++i) {
+//                     double t = static_cast<double>(i - chordStart) / config["nSampleRate"];
+//                     double envelope = 1.0;
+//                     if (i - chordStart < attack) {
+//                         envelope = (i - chordStart) / attack;
+//                     } else if (chordEnd - i < release) {
+//                         envelope = (chordEnd - i) / release;
+//                     }
+
+//                     double sample = 0.0;
+//                     for (const auto& [freq, phase] : chordFreqs) {
+//                         sample += std::sin(2 * M_PI * freq * t + phase);
+//                     }
+//                     sample *= envelope / chordFreqs.size(); 
+
+//                     this->waveform[i] += static_cast<float>(sample);
+//                 }
+//                 currMeasurePos = chordEnd;
+//             }
+//         }
+//     }
+
+//     // Apply a simple limiter to prevent clipping
+//     float maxAmp = *std::max_element(this->waveform.begin(), this->waveform.end(),
+//                                      [](float a, float b) { return std::abs(a) < std::abs(b); });
+//     if (maxAmp > 1.0f) {
+//         for (float& sample : this->waveform) {
+//             sample /= maxAmp;
+//         }
+//     }
+// }
