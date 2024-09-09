@@ -40,6 +40,7 @@ class MxmlParser {
     const std::array<const unsigned char*, 3> measurePhrases = {USTR("number"), USTR("attributes"), USTR("note")};
     const std::array<const unsigned char*, 2> partPhrases = {USTR("id"), USTR("measure")};
     const std::array<const unsigned char*, 1> mainPhrases = {USTR("part")};
+    const std::array<const unsigned char*, 6> chordPhrases = {USTR("pitch"), USTR("octave"), USTR("step"), USTR("duration"), USTR("chord"), USTR("alter")};
 
     // utils
     std::vector<Part> partwiseParser(xmlNode* node, std::vector<Part>& partList);

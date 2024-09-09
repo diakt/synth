@@ -92,14 +92,6 @@ std::pair<bool, Chord> MxmlParser::chordParser(xmlNode* chordNode) {
     int alter = 0;
 
     if (chordNode) {
-        static const std::array<const unsigned char*, 6> chordPhrases = {
-            USTR("pitch"),
-            USTR("octave"),
-            USTR("step"),
-            USTR("duration"),
-            USTR("chord"),
-            USTR("alter")};
-
         std::pair<int, std::string> currNote;
         for (auto child = makeXmlNodeShared(chordNode->children); child; child = makeXmlNodeShared(child.get()->next)) {
             if (xmlStrcmp(child.get()->name, chordPhrases[0]) == 0) {  // pitch

@@ -49,7 +49,7 @@
         <duration>4</duration>
         <type>whole</type>
       </note>
-      <note>
+      <!-- <note>
         <chord/>
         <pitch>
           <step>B</step>
@@ -58,7 +58,7 @@
         </pitch>
         <duration>4</duration>
         <type>whole</type>
-      </note>
+      </note> -->
     </measure>
     <measure number="2">
       <note>
