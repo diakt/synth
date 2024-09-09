@@ -1,4 +1,3 @@
-// #include "wavefile.hpp"
 #include <iostream>
 #include <chrono>
 #include <string>
@@ -18,7 +17,6 @@ int main() {
         {"volume", 1},
     };
 
-
     //Parser object
     MxmlParser mxmlParser;
     mxmlParser.setInputFile(inputFilename);
@@ -31,10 +29,5 @@ int main() {
     audioProcessor.setConfig(outputConfig);
     audioProcessor.genWaveform(mxml);
 
-    bool success = audioProcessor.writeWaveFile();
-    if (!success) {
-        std::cout << "Failed to write wave file." << std::endl;
-        return 1;
-    } 
-    return 0;
+    return !audioProcessor.writeWaveFile();
 }
