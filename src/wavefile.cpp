@@ -90,7 +90,7 @@ void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
 
     // add audio
     int currMeasurePos, baseNoteLength;
-    int chordStart, chordEnd;
+    int chordStart, chordEnd, chordLen;
     int currNote = 0;
 
     for (Part& currPart : mxml) {
@@ -99,19 +99,30 @@ void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
             baseNoteLength = config["nSampleRate"] * currMeasure.attributes.divisions / currMeasure.attributes.beats;  // if 4, on
 
             for (Chord& currChord : currMeasure.chords) {
+                chordLen = currChord.duration * baseNoteLength;
                 chordStart = currMeasurePos;
-                chordEnd = currMeasurePos + (currChord.duration * baseNoteLength);  // how far to step
+                chordEnd = currMeasurePos + chordLen;  // how far to step
+                float stepOut = chordLen/10;
+                // std::cout << "chordLen chordStart"
 
                 std::vector<float> chordFreq{};
                 for (std::pair<int, std::string>& currNote : currChord.octNotes) {
                     chordFreq.push_back(getFreq(currNote.first, keyMap[currNote.second]));
                 }
-                //Todo - Implement enveloping for discont handling 
+                // Todo - Implement enveloping for discont handling
                 for (int i = chordStart; i <= chordEnd; ++i) {
                     float t = static_cast<float>(i) / config["nSampleRate"];
                     float norm = 1.0f / partWeight[i];
+                    float adj = 1.0f;
+                    if (i < chordStart + stepOut) {
+                        adj = 1.0f / stepOut * (i - chordStart);
+                    } else if (i > chordEnd - stepOut) {
+                        adj = 1.0f / stepOut * (chordEnd-i);
+                    } else {
+                        adj = 1.0f;
+                    }
                     for (float& currNote : chordFreq) {
-                        this->waveform[i] += norm * std::sin(2 * M_PI * currNote * t);  
+                        this->waveform[i] += adj * norm * std::sin(2 * M_PI * currNote * t);
                     }
                 }
                 currMeasurePos = chordEnd;
@@ -121,7 +132,7 @@ void AudioProcessor::genWaveform(std::vector<Part>& mxml) {
 }
 
 bool AudioProcessor::writeWaveFile() {
-    //TODO - Don't look too hard
+    // TODO - Don't look too hard
     return AudioProcessor::writeWaveFile<int32_t>(
         config["nNumSamples"],  // note nNumSamples is added  in mxmlFac
         config["nNumChannels"],
